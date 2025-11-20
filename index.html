@@ -1,0 +1,916 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>RandPicker Pro - Number & Wheel</title>
+    <meta name="description" content="A professional random number generator with Normal and Spin Wheel modes.">
+    
+    <!-- FAVICON: Using the Dice emoji 🎲 -->
+    <link rel="icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><text y=%22.9em%22 font-size=%2290%22>🎲</text></svg>">
+    
+    <style>
+        /* CSS Variables for Theming */
+        :root {
+            --bg-color: #f4f6f8;
+            --card-bg: #ffffff;
+            --text-primary: #1e293b;
+            --text-secondary: #64748b;
+            --accent: #10b981; /* Green accent for a fresh look */
+            --accent-hover: #059669;
+            --error: #ef4444;
+            --border: #e2e8f0;
+            --shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05);
+            --wheel-border: #f3f4f6;
+            --focus-ring: rgba(16, 185, 129, 0.5);
+            --font-family: 'Inter', system-ui, -apple-system, sans-serif;
+        }
+
+        [data-theme="dark"] {
+            --bg-color: #0f172a;
+            --card-bg: #1e293b;
+            --text-primary: #f1f5f9;
+            --text-secondary: #94a3b8;
+            --accent: #34d399; /* Slightly brighter green for dark mode contrast */
+            --accent-hover: #10b981;
+            --border: #334155;
+            --wheel-border: #374151;
+            --shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.5);
+        }
+
+        /* Base & Reset */
+        * { box-sizing: border-box; margin: 0; padding: 0; transition: background-color 0.3s, color 0.3s, box-shadow 0.3s; }
+        
+        body {
+            font-family: var(--font-family);
+            background-color: var(--bg-color);
+            color: var(--text-primary);
+            line-height: 1.5;
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            padding: 20px;
+            /* Disable Text Selection */
+            -webkit-user-select: none;
+            -moz-user-select: none;
+            -ms-user-select: none;
+            user-select: none;
+        }
+
+        /* Layout & Card */
+        .container {
+            max-width: 900px;
+            width: 100%;
+            display: flex;
+            flex-direction: column;
+            gap: 20px;
+        }
+
+        .card {
+            background: var(--card-bg);
+            border-radius: 20px;
+            box-shadow: var(--shadow);
+            padding: clamp(20px, 5vw, 30px);
+            border: 1px solid var(--border);
+        }
+
+        .header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .header h1 { font-size: clamp(1.5rem, 4vw, 2rem); font-weight: 800; color: var(--text-primary); }
+        
+        .toolbar { display: flex; gap: 10px; }
+
+        /* Buttons & Inputs */
+        button {
+            cursor: pointer;
+            border: none;
+            background: none;
+            font-family: inherit;
+            border-radius: 12px;
+            padding: 10px 16px;
+            font-weight: 600;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            gap: 8px;
+            transition: all 0.2s ease;
+        }
+
+        .btn-icon { background: var(--border); color: var(--text-secondary); padding: 8px; border-radius: 50%; }
+        .btn-icon:hover { background: var(--accent); color: white; }
+        
+        .btn-primary {
+            background-color: var(--accent);
+            color: white;
+            padding: 14px 28px;
+            font-size: 1.1rem;
+            width: 100%;
+            margin-top: 15px;
+            box-shadow: 0 4px 10px rgba(16, 185, 129, 0.3);
+        }
+        .btn-primary:hover:not(:disabled) { background-color: var(--accent-hover); transform: translateY(-2px); box-shadow: 0 6px 12px rgba(16, 185, 129, 0.4); }
+        .btn-primary:active:not(:disabled) { transform: translateY(0); box-shadow: 0 2px 5px rgba(16, 185, 129, 0.3); }
+        .btn-primary:disabled { opacity: 0.6; cursor: not-allowed; filter: grayscale(1); box-shadow: none; }
+        
+        /* Preset Buttons Specific Styling */
+        .preset-buttons {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 10px;
+            margin-bottom: 20px;
+        }
+        
+        .btn-preset {
+            padding: 8px 14px;
+            background-color: var(--bg-color);
+            color: var(--text-secondary);
+            border: 1px solid var(--border);
+            font-size: 0.9rem;
+            flex-grow: 1; /* Allow stretching in small spaces */
+            min-width: 80px; /* Minimum size */
+        }
+        .btn-preset:hover {
+            background-color: var(--border);
+            color: var(--text-primary);
+        }
+        .btn-preset.active {
+            background-color: var(--accent);
+            color: white;
+            border-color: var(--accent);
+            box-shadow: 0 2px 5px rgba(16, 185, 129, 0.3);
+        }
+        .btn-preset.active:hover {
+            background-color: var(--accent-hover);
+            color: white;
+        }
+
+
+        .input-group {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 15px;
+            margin-bottom: 20px;
+        }
+        
+        @media (max-width: 600px) {
+            .input-group { grid-template-columns: 1fr; }
+        }
+
+        label { 
+            display: block; 
+            font-size: 0.9rem; 
+            color: var(--text-secondary); 
+            margin-bottom: 6px; 
+            font-weight: 500;
+        }
+        
+        input, select {
+            width: 100%;
+            padding: 12px;
+            border-radius: 10px;
+            border: 1px solid var(--border);
+            background: var(--bg-color);
+            color: var(--text-primary);
+            font-size: 1rem;
+        }
+        input:focus, select:focus { outline: none; border-color: var(--accent); box-shadow: 0 0 0 3px var(--focus-ring); }
+
+        /* Tabs */
+        .tabs {
+            display: flex;
+            background: var(--bg-color);
+            padding: 6px;
+            border-radius: 12px;
+            margin-bottom: 30px;
+        }
+        .tab {
+            flex: 1;
+            text-align: center;
+            padding: 10px;
+            border-radius: 10px;
+            color: var(--text-secondary);
+            font-weight: 600;
+            font-size: 1rem;
+        }
+        .tab.active {
+            background: var(--card-bg);
+            color: var(--accent);
+            box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+        }
+
+        /* Validation Messages */
+        .validation-msg {
+            background-color: rgba(239, 68, 68, 0.1);
+            color: var(--error);
+            padding: 15px;
+            border-radius: 10px;
+            font-size: 0.95rem;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            margin-bottom: 20px;
+            border: 1px solid rgba(239, 68, 68, 0.2);
+        }
+        .validation-msg.hidden { display: none; }
+
+        /* MODE: Normal */
+        #panel-normal { text-align: center; padding: 20px 0; }
+        .result-label { font-size: 0.9rem; text-transform: uppercase; letter-spacing: 1.5px; color: var(--text-secondary); font-weight: 700; margin-bottom: 5px;}
+        .result-display {
+            font-size: clamp(3rem, 10vw, 6rem);
+            font-weight: 900;
+            color: var(--text-primary);
+            min-height: 100px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-variant-numeric: tabular-nums;
+        }
+
+        /* MODE: Wheel */
+        #panel-wheel {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            position: relative;
+        }
+
+        /* Wheel Container (Responsive) */
+        .wheel-container {
+            position: relative;
+            width: 90%; 
+            max-width: 350px; 
+            aspect-ratio: 1 / 1; 
+            margin: 30px auto;
+        }
+
+        .wheel {
+            width: 100%;
+            height: 100%;
+            border-radius: 50%;
+            position: relative;
+            overflow: hidden;
+            transition: transform cubic-bezier(0.25, 0.1, 0.25, 1);
+            border: 10px solid var(--card-bg); /* Thicker internal border */
+            box-shadow: 0 0 0 4px var(--wheel-border), var(--shadow); /* External border and shadow */
+            background: var(--card-bg);
+        }
+
+        .wheel-canvas { width: 100%; height: 100%; transform: rotate(-90deg); }
+
+        .wheel-pointer {
+            position: absolute;
+            top: -15px; /* Moved slightly up */
+            left: 50%;
+            transform: translateX(-50%);
+            width: 0; 
+            height: 0; 
+            border-left: 18px solid transparent;
+            border-right: 18px solid transparent;
+            border-top: 30px solid var(--error); /* Red pointer */
+            z-index: 10;
+            filter: drop-shadow(0 2px 2px rgba(0,0,0,0.3));
+        }
+
+        .spin-btn-center {
+            position: absolute;
+            top: 50%; left: 50%;
+            transform: translate(-50%, -50%);
+            width: 70px; height: 70px;
+            border-radius: 50%;
+            background: var(--text-primary);
+            color: var(--card-bg);
+            border: 5px solid var(--card-bg);
+            font-weight: bold;
+            z-index: 20;
+            box-shadow: 0 6px 15px rgba(0,0,0,0.4);
+            display: grid; place-items: center;
+            cursor: pointer;
+            font-size: 0.9rem;
+            text-transform: uppercase;
+        }
+        .spin-btn-center:disabled { background: var(--text-secondary); cursor: not-allowed; }
+
+        /* Animations */
+        @keyframes pop {
+            0% { transform: scale(1); }
+            50% { transform: scale(1.1); color: var(--accent); text-shadow: 0 0 10px var(--accent); }
+            100% { transform: scale(1); color: var(--text-primary); }
+        }
+        .animate-pop { animation: pop 0.4s ease-out forwards; }
+        
+        /* SVG Text Style */
+        text {
+            font-family: inherit;
+            font-weight: 700;
+            fill: #fff;
+            text-anchor: middle;
+            dominant-baseline: middle;
+            font-size: 5px; /* Relative to 100x100 viewbox */
+            pointer-events: none;
+        }
+    </style>
+</head>
+<body>
+
+<div class="container">
+    <header class="card header">
+        <h1>RandPicker<span style="color:var(--accent)">.Pro</span></h1>
+        <div class="toolbar">
+            <button class="btn-icon" id="btn-mute" aria-label="Toggle Sound" title="Toggle Sound">
+                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M11 5 6 9H2v6h4l5 4z"></path><path d="M19.07 4.93a10 10 0 0 1 0 14.14M15.54 8.46a5 5 0 0 1 0 7.07"></path></svg>
+            </button>
+            <button class="btn-icon" id="btn-theme" aria-label="Toggle Theme" title="Toggle Dark/Light Mode">
+                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"></path></svg>
+            </button>
+        </div>
+    </header>
+
+    <main class="card">
+        <nav class="tabs" role="tablist">
+            <button class="tab active" id="tab-normal" role="tab" aria-selected="true" aria-controls="panel-normal">Number Generator</button>
+            <button class="tab" id="tab-wheel" role="tab" aria-selected="false" aria-controls="panel-wheel">Spin Wheel</button>
+        </nav>
+
+        <h3 style="font-size: 1.1rem; color: var(--text-primary); margin-bottom: 10px;">Quick Presets</h3>
+        <div class="preset-buttons" id="preset-buttons-container">
+            <!-- Preset buttons will be dynamically added here -->
+        </div>
+
+        <div class="input-group">
+            <div>
+                <label for="inp-min">Min Number (0-999)</label>
+                <input type="number" id="inp-min" value="1">
+            </div>
+            <div>
+                <label for="inp-max">Max Number (0-999)</label>
+                <input type="number" id="inp-max" value="6">
+            </div>
+        </div>
+
+        <div id="error-box" class="validation-msg hidden" role="alert">
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"></circle><line x1="12" y1="8" x2="12" y2="12"></line><line x1="12" y1="16" x2="12.01" y2="16"></line></svg>
+            <span id="error-text">Error message</span>
+        </div>
+
+        <section id="panel-normal" role="tabpanel">
+            <div class="result-label">The Result</div>
+            <div class="result-display" id="normal-result">--</div>
+            <button id="btn-generate" class="btn-primary">
+                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="5" x2="12" y2="19"></line><line x1="5" y1="12" x2="19" y2="12"></line></svg> 
+                Generate Random Number
+            </button>
+        </section>
+
+        <section id="panel-wheel" role="tabpanel" style="display: none;">
+            
+            <div style="width: 100%; max-width: 250px; margin: 0 auto 15px auto;">
+                <label for="spin-duration" style="text-align: center;">Spin Duration (Seconds)</label>
+                <select id="spin-duration">
+                    <option value="4" selected>4 Seconds (Standard)</option>
+                    <option value="3">3 Seconds (Fast)</option>
+                    <option value="5">5 Seconds</option>
+                    <option value="6">6 Seconds</option>
+                    <option value="7">7 Seconds (Slow)</option>
+                </select>
+            </div>
+
+            <div class="wheel-container">
+                <div class="wheel-pointer"></div>
+                <button class="spin-btn-center" id="btn-spin">Spin</button>
+                <div class="wheel" id="wheel-el">
+                    <!-- Wheel SVG will be rendered here -->
+                </div>
+            </div>
+            
+            <div style="text-align: center;">
+                <div class="result-label">Winning Number</div>
+                <h2 id="wheel-result-text" style="font-size: clamp(1.5rem, 5vw, 3rem); color: var(--text-primary); min-height: 40px; font-weight: 800;">Ready to Spin</h2>
+            </div>
+
+            <button id="btn-wheel-spin-trigger" class="btn-primary">
+                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21.5 2v6h-6"/><path d="M2.5 22v-6h6"/><path d="M21.5 8a10 10 0 0 0-17-5"/><path d="M2.5 16a10 10 0 0 0 17 5"/></svg>
+                Spin the Wheel
+            </button>
+        </section>
+    </main>
+</div>
+
+<script>
+    /**
+     * APP CONFIGURATION & STATE
+     */
+    const CONSTANTS = {
+        MAX_NORMAL_RANGE: 500,
+        MAX_WHEEL_OPTIONS: 20, 
+        MAX_INPUT_VALUE: 999,  
+        MIN_INPUT_VALUE: 0,    
+        COLORS: [
+            '#ef4444', '#f97316', '#f59e0b', '#10b981', '#3b82f6', '#6366f1', '#8b5cf6', '#ec4899', 
+            '#f06292', '#ff8a65', '#ffd54f', '#aed581', '#4dd0e1', '#64b5f6', '#9575cd', '#e57373',
+            '#4a148c', '#ad1457', '#d84315', '#004d40', '#01579b', 
+            '#4527a0', '#c2185b', '#00838f' 
+        ],
+        PRESETS: [
+            { label: 'Dice (1-6)', min: 1, max: 6 },
+            { label: 'Coin (0-1)', min: 0, max: 1 },
+            { label: '1-10', min: 1, max: 10 },
+            { label: '1-20', min: 1, max: 20 }, // Max for wheel
+            { label: '1-100', min: 1, max: 100 },
+        ]
+    };
+
+    // Initialize state with the new 1-6 default
+    const state = {
+        mode: 'normal', 
+        min: 1,
+        max: 6, 
+        isSpinning: false,
+        currentRotation: 0,
+        soundEnabled: true,
+        theme: 'light',
+        activePreset: 'Dice (1-6)'
+    };
+
+    // DOM Cache
+    const els = {
+        inputs: {
+            min: document.getElementById('inp-min'),
+            max: document.getElementById('inp-max'),
+            duration: document.getElementById('spin-duration')
+        },
+        tabs: {
+            normal: document.getElementById('tab-normal'),
+            wheel: document.getElementById('tab-wheel')
+        },
+        panels: {
+            normal: document.getElementById('panel-normal'),
+            wheel: document.getElementById('panel-wheel')
+        },
+        btns: {
+            generate: document.getElementById('btn-generate'),
+            spinCenter: document.getElementById('btn-spin'),
+            spinTrigger: document.getElementById('btn-wheel-spin-trigger'),
+            theme: document.getElementById('btn-theme'),
+            mute: document.getElementById('btn-mute'),
+        },
+        display: {
+            normal: document.getElementById('normal-result'),
+            wheelResult: document.getElementById('wheel-result-text'),
+            wheel: document.getElementById('wheel-el'),
+            errorBox: document.getElementById('error-box'),
+            errorText: document.getElementById('error-text'),
+            presetContainer: document.getElementById('preset-buttons-container')
+        }
+    };
+
+    /**
+     * CORE FUNCTIONS: RNG & Validation
+     */
+
+    // Secure Random Number Generator
+    function getSecureRandom(min, max) {
+        const range = max - min + 1;
+        if (window.crypto && window.crypto.getRandomValues) {
+            const array = new Uint32Array(1);
+            window.crypto.getRandomValues(array);
+            const randomFloat = array[0] / (0xFFFFFFFF + 1);
+            return Math.floor(randomFloat * range) + min;
+        } else {
+            console.warn("Crypto API unavailable, using Math.random");
+            return Math.floor(Math.random() * range) + min;
+        }
+    }
+
+    // Input Validation
+    function validate() {
+        const min = parseInt(els.inputs.min.value);
+        const max = parseInt(els.inputs.max.value);
+        let isValid = true;
+        let errorMsg = "";
+        let isCustom = true;
+
+        // 1. Basic Integer Check
+        if (isNaN(min) || isNaN(max)) {
+            isValid = false;
+            errorMsg = "Please enter valid integers for Min and Max.";
+        } 
+        // 2. Input Range Check (0 to 999)
+        else if (min < CONSTANTS.MIN_INPUT_VALUE || max > CONSTANTS.MAX_INPUT_VALUE || min > CONSTANTS.MAX_INPUT_VALUE || max < CONSTANTS.MIN_INPUT_VALUE) {
+            isValid = false;
+            errorMsg = `Numbers must be between ${CONSTANTS.MIN_INPUT_VALUE} and ${CONSTANTS.MAX_INPUT_VALUE}.`;
+        }
+        // 3. Logic Check
+        else if (min > max) {
+            isValid = false;
+            errorMsg = "The Minimum number cannot be greater than the Maximum number.";
+        }
+        else {
+            const rangeSize = max - min + 1;
+            
+            // 4. Mode specific limits
+            if (state.mode === 'normal') {
+                if (rangeSize > CONSTANTS.MAX_NORMAL_RANGE) {
+                    isValid = false;
+                    errorMsg = `Range too large (${rangeSize}). Max limit is ${CONSTANTS.MAX_NORMAL_RANGE} options.`;
+                }
+            } else {
+                // Wheel Mode
+                if (rangeSize > CONSTANTS.MAX_WHEEL_OPTIONS) {
+                    isValid = false;
+                    errorMsg = `Too many options for the Wheel (${rangeSize}). Maximum is ${CONSTANTS.MAX_WHEEL_OPTIONS}.`;
+                }
+                if (rangeSize < 2) {
+                    isValid = false;
+                    errorMsg = "The Wheel requires at least 2 distinct numbers.";
+                }
+            }
+        }
+
+        // Update UI based on validation
+        if (isValid) {
+            els.display.errorBox.classList.add('hidden');
+            els.btns.generate.disabled = false;
+            els.btns.spinCenter.disabled = false;
+            els.btns.spinTrigger.disabled = false;
+            
+            state.min = min;
+            state.max = max;
+
+            // Check if current input matches a preset
+            const currentPreset = CONSTANTS.PRESETS.find(p => p.min === min && p.max === max);
+            state.activePreset = currentPreset ? currentPreset.label : null;
+            updatePresetButtons();
+            
+            // If in wheel mode, rebuild wheel if not spinning
+            if (state.mode === 'wheel' && !state.isSpinning) {
+                drawWheel(min, max);
+            }
+        } else {
+            els.display.errorBox.classList.remove('hidden');
+            els.display.errorText.textContent = errorMsg;
+            els.btns.generate.disabled = true;
+            els.btns.spinCenter.disabled = true;
+            els.btns.spinTrigger.disabled = true;
+            
+            state.activePreset = null;
+            updatePresetButtons();
+        }
+
+        return isValid;
+    }
+
+    /**
+     * FEATURE: PRESET BUTTONS
+     */
+    function applyPreset(min, max, label) {
+        els.inputs.min.value = min;
+        els.inputs.max.value = max;
+        state.activePreset = label;
+        validate(); // This calls updatePresetButtons internally
+    }
+
+    function updatePresetButtons() {
+        const buttons = els.display.presetContainer.querySelectorAll('.btn-preset');
+        buttons.forEach(button => {
+            if (button.dataset.label === state.activePreset) {
+                button.classList.add('active');
+            } else {
+                button.classList.remove('active');
+            }
+        });
+    }
+
+    function renderPresetButtons() {
+        const container = els.display.presetContainer;
+        container.innerHTML = '';
+
+        CONSTANTS.PRESETS.forEach(p => {
+            const button = document.createElement('button');
+            button.className = 'btn-preset';
+            button.textContent = p.label;
+            button.dataset.min = p.min;
+            button.dataset.max = p.max;
+            button.dataset.label = p.label;
+            
+            button.addEventListener('click', () => applyPreset(p.min, p.max, p.label));
+            container.appendChild(button);
+        });
+        
+        // Add a "Custom" button which clears the active state
+        const customButton = document.createElement('button');
+        customButton.className = 'btn-preset';
+        customButton.textContent = 'Custom';
+        customButton.dataset.label = 'Custom';
+        customButton.addEventListener('click', () => {
+             // You can optionally clear min/max here or just clear active preset
+             state.activePreset = null;
+             updatePresetButtons();
+        });
+        // container.appendChild(customButton);
+
+        updatePresetButtons(); // Set initial active state
+    }
+
+
+    /**
+     * AUDIO SYSTEM
+     */
+    const audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+    
+    function playSound(type) {
+        if (!state.soundEnabled) return;
+        if (audioCtx.state === 'suspended') audioCtx.resume();
+
+        const osc = audioCtx.createOscillator();
+        const gain = audioCtx.createGain();
+        osc.connect(gain);
+        gain.connect(audioCtx.destination);
+
+        if (type === 'click') {
+            osc.type = 'square';
+            osc.frequency.setValueAtTime(800, audioCtx.currentTime);
+            osc.frequency.exponentialRampToValueAtTime(100, audioCtx.currentTime + 0.05);
+            gain.gain.setValueAtTime(0.1, audioCtx.currentTime);
+            gain.gain.exponentialRampToValueAtTime(0.001, audioCtx.currentTime + 0.05);
+            osc.start();
+            osc.stop(audioCtx.currentTime + 0.05);
+        } else if (type === 'win') {
+            osc.type = 'sine';
+            osc.frequency.setValueAtTime(440, audioCtx.currentTime); 
+            osc.frequency.exponentialRampToValueAtTime(880, audioCtx.currentTime + 0.3);
+            gain.gain.setValueAtTime(0.2, audioCtx.currentTime);
+            gain.gain.exponentialRampToValueAtTime(0.001, audioCtx.currentTime + 0.5);
+            osc.start();
+            osc.stop(audioCtx.currentTime + 0.5);
+        }
+    }
+
+    /**
+     * LOGIC: NORMAL MODE
+     */
+    function runNormalGeneration() {
+        if (state.isSpinning || !validate()) return;
+        state.isSpinning = true;
+        els.btns.generate.disabled = true;
+
+        els.display.normal.classList.remove('animate-pop');
+
+        const target = getSecureRandom(state.min, state.max);
+        let duration = 800; 
+        let startTime = null;
+
+        function frame(timestamp) {
+            if (!startTime) startTime = timestamp;
+            const progress = timestamp - startTime;
+
+            if (progress < duration) {
+                els.display.normal.textContent = getSecureRandom(state.min, state.max);
+                requestAnimationFrame(frame);
+            } else {
+                els.display.normal.textContent = target;
+                els.display.normal.classList.add('animate-pop');
+                playSound('win');
+                state.isSpinning = false;
+                els.btns.generate.disabled = false;
+            }
+        }
+        requestAnimationFrame(frame);
+    }
+
+    /**
+     * LOGIC: WHEEL MODE
+     */
+    
+    // Draw Wheel using SVG
+    function drawWheel(min, max) {
+        const range = max - min + 1;
+        const container = els.display.wheel;
+        container.innerHTML = ''; 
+
+        const radius = 50; 
+        const center = 50;
+        // The CSS for .wheel-canvas rotates the whole SVG by -90deg, aligning the 3 o'clock mark (0 deg SVG) visually to 12 o'clock.
+        let svgContent = `<svg viewBox="0 0 100 100" class="wheel-canvas">`;
+
+        const sliceAngle = 360 / range;
+
+        for (let i = 0; i < range; i++) {
+            const value = min + i;
+            
+            // Calculate slice path
+            const startA = i * sliceAngle;
+            const endA = (i + 1) * sliceAngle;
+
+            const startRad = (startA - 90) * Math.PI / 180;
+            const endRad = (endA - 90) * Math.PI / 180;
+
+            const x1 = center + radius * Math.cos(startRad);
+            const y1 = center + radius * Math.sin(startRad);
+            const x2 = center + radius * Math.cos(endRad);
+            const y2 = center + radius * Math.sin(endRad);
+
+            const largeArcFlag = sliceAngle > 180 ? 1 : 0;
+            const pathData = `M ${center} ${center} L ${x1} ${y1} A ${radius} ${radius} 0 ${largeArcFlag} 1 ${x2} ${y2} Z`;
+
+            const color = CONSTANTS.COLORS[i % CONSTANTS.COLORS.length];
+
+            svgContent += `<path d="${pathData}" fill="${color}" stroke="white" stroke-width="0.5" />`;
+
+            // Add Text
+            const midAngle = startA + (sliceAngle / 2);
+            const midRad = (midAngle - 90) * Math.PI / 180;
+            const textRadius = radius * 0.75; 
+            const tx = center + textRadius * Math.cos(midRad);
+            const ty = center + textRadius * Math.sin(midRad);
+            
+            const textRot = midAngle; 
+            
+            svgContent += `<text x="${tx}" y="${ty}" transform="rotate(${textRot}, ${tx}, ${ty})">${value}</text>`;
+        }
+
+        svgContent += `</svg>`;
+        container.innerHTML = svgContent;
+        // Reset transformation after drawing (important for new wheel segments)
+        container.style.transform = `rotate(${state.currentRotation}deg)`;
+    }
+
+    function runWheelSpin() {
+        if (state.isSpinning || !validate()) return;
+        
+        state.isSpinning = true;
+        els.btns.spinCenter.disabled = true;
+        els.btns.spinTrigger.disabled = true;
+
+        // Disable inputs while spinning
+        els.inputs.min.disabled = true;
+        els.inputs.max.disabled = true;
+        
+        els.display.wheelResult.textContent = "Spinning...";
+
+        const range = state.max - state.min + 1;
+        const duration = parseFloat(els.inputs.duration.value);
+        const targetNumber = getSecureRandom(state.min, state.max);
+        
+        const targetIndex = targetNumber - state.min;
+        const degPerSlice = 360 / range;
+        
+        // 1. Calculate the center angle of the target slice in the SVG coordinate system (3 o'clock = 0 deg, increasing counter-clockwise).
+        // UPDATED: Add random offset within the slice (10% to 90% buffer) for natural landing
+        const randomFactor = Math.random() * 0.8 + 0.1;
+        const angleFrom3OClock = targetIndex * degPerSlice + degPerSlice * randomFactor;
+        
+        // 2. The pointer is visually aligned with the 90-degree position in the SVG system (12 o'clock).
+        //    We calculate the minimum clockwise rotation needed to move the segment's center to the 90-degree mark.
+        let landingAngle = 90 - angleFrom3OClock; 
+        
+        // 3. Ensure landingAngle is positive (0 to 359 degrees)
+        if (landingAngle < 0) {
+            landingAngle += 360;
+        }
+
+        // Add full rotations (min 5 spins) to ensure momentum effect
+        const fullSpins = 5 * 360;
+        
+        // Calculate total rotation, ensuring it's relative to current rotation and moves forward
+        const currentWheelRotation = state.currentRotation % 360;
+        const offset = landingAngle - currentWheelRotation;
+        let totalRotation = state.currentRotation + fullSpins + offset;
+        
+        // This final check ensures we always spin forward and stop precisely on the target
+        while (totalRotation < state.currentRotation + fullSpins) {
+            totalRotation += 360;
+        }
+
+        state.currentRotation = totalRotation;
+
+        // Apply CSS transition and rotation
+        // UPDATED: New easing for slow start -> fast accel -> long smooth deceleration
+        els.display.wheel.style.transition = `transform ${duration}s cubic-bezier(0.5, 0, 0.15, 1)`;
+        els.display.wheel.style.transform = `rotate(${totalRotation}deg)`;
+
+        // Cleanup after animation
+        setTimeout(() => {
+            state.isSpinning = false;
+            els.btns.spinCenter.disabled = false;
+            els.btns.spinTrigger.disabled = false;
+
+            // Re-enable inputs
+            els.inputs.min.disabled = false;
+            els.inputs.max.disabled = false;
+            
+            els.display.wheelResult.textContent = targetNumber;
+            els.display.wheelResult.classList.remove('animate-pop');
+            void els.display.wheelResult.offsetWidth; // trigger reflow
+            els.display.wheelResult.classList.add('animate-pop');
+            
+            playSound('win');
+        }, duration * 1000);
+    }
+
+
+    /**
+     * UTILS
+     */
+    function toggleTheme() {
+        state.theme = document.documentElement.getAttribute('data-theme') === 'dark' ? 'light' : 'dark';
+        document.documentElement.setAttribute('data-theme', state.theme);
+    }
+
+    /**
+     * EVENT LISTENERS
+     */
+    
+    // Inputs (Min/Max)
+    ['keyup', 'change'].forEach(evt => {
+        els.inputs.min.addEventListener(evt, validate);
+        els.inputs.max.addEventListener(evt, validate);
+    });
+
+    // Tabs
+    function switchTab(newMode) {
+        state.mode = newMode;
+        if (newMode === 'normal') {
+            els.tabs.normal.classList.add('active');
+            els.tabs.normal.setAttribute('aria-selected', 'true');
+            els.tabs.wheel.classList.remove('active');
+            els.tabs.wheel.setAttribute('aria-selected', 'false');
+            
+            els.panels.normal.style.display = 'block';
+            els.panels.wheel.style.display = 'none';
+        } else {
+            els.tabs.wheel.classList.add('active');
+            els.tabs.wheel.setAttribute('aria-selected', 'true');
+            els.tabs.normal.classList.remove('active');
+            els.tabs.normal.setAttribute('aria-selected', 'false');
+
+            els.panels.wheel.style.display = 'flex';
+            els.panels.normal.style.display = 'none';
+        }
+        validate();
+    }
+    els.tabs.normal.addEventListener('click', () => switchTab('normal'));
+    els.tabs.wheel.addEventListener('click', () => switchTab('wheel'));
+
+    // Main Buttons
+    els.btns.generate.addEventListener('click', runNormalGeneration);
+    // Bind both the center button and the main button to the spin logic
+    els.btns.spinCenter.addEventListener('click', runWheelSpin);
+    els.btns.spinTrigger.addEventListener('click', runWheelSpin);
+    
+    // Utility Buttons
+    els.btns.theme.addEventListener('click', toggleTheme);
+    
+    els.btns.mute.addEventListener('click', () => {
+        state.soundEnabled = !state.soundEnabled;
+        els.btns.mute.style.opacity = state.soundEnabled ? 1 : 0.5;
+        // In a full app, you'd update the SVG path here to show a slash
+    });
+
+    /**
+     * SECURITY: DISABLE COPY & CONTEXT MENU
+     */
+    function preventCopying() {
+        // Prevent Right Click
+        document.addEventListener('contextmenu', (e) => e.preventDefault());
+        
+        // Prevent Copy/Cut Keyboard Shortcuts
+        document.addEventListener('keydown', (e) => {
+            // Block Ctrl+C, Ctrl+X, Ctrl+U (View Source), Ctrl+S (Save)
+            if ((e.ctrlKey || e.metaKey) && ['c', 'x', 'u', 's', 'p'].includes(e.key.toLowerCase())) {
+                e.preventDefault();
+            }
+        });
+    }
+
+
+    // Initialization
+    (function init() {
+        // Activate Security
+        preventCopying();
+
+        // Initial setup for the 1-6 default
+        els.inputs.min.value = state.min;
+        els.inputs.max.value = state.max;
+
+        // Render the new preset buttons
+        renderPresetButtons();
+
+        // Detect System Theme
+        if (window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches) {
+            document.documentElement.setAttribute('data-theme', 'dark');
+            state.theme = 'dark';
+        }
+        
+        validate(); // Initial validation and wheel draw
+    })();
+
+</script>
+
+</body>
+</html>
