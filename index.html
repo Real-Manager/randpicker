@@ -1,0 +1,1019 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>RandPicker Pro - Professional RNG</title>
+    <meta name="description" content="A professional, clean random number generator and spin wheel.">
+    
+    <!-- FAVICON -->
+    <link rel="icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><text y=%22.9em%22 font-size=%2290%22>🎲</text></svg>">
+    
+    <!-- FONT: Inter for UI, JetBrains Mono for Numbers -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;800&family=JetBrains+Mono:wght@500;800&display=swap" rel="stylesheet">
+
+    <style>
+        /* * 🎨 THEME CONFIGURATION */
+        :root {
+            --bg-body: #e2e8f0; 
+            --bg-card: #ffffff;
+            --bg-input: #f8fafc;
+            
+            --text-main: #0f172a;
+            --text-muted: #64748b;
+            --text-error: #ef4444;
+            
+            --primary: #4f46e5;
+            --primary-hover: #4338ca;
+            --primary-light: #e0e7ff;
+            
+            --border: #cbd5e1; 
+            --shadow-sm: 0 1px 2px 0 rgb(0 0 0 / 0.05);
+            --shadow-lg: 0 20px 25px -5px rgb(0 0 0 / 0.1), 0 8px 10px -6px rgb(0 0 0 / 0.1);
+            
+            --radius-lg: 24px;
+            --radius-md: 16px;
+            --radius-sm: 12px;
+            
+            --transition: cubic-bezier(0.4, 0, 0.2, 1);
+        }
+
+        [data-theme="dark"] {
+            --bg-body: #0f172a;
+            --bg-card: #1e293b;
+            --bg-input: #334155;
+            
+            --text-main: #f8fafc;
+            --text-muted: #94a3b8;
+            
+            --primary: #6366f1; 
+            --primary-hover: #818cf8;
+            --primary-light: #312e81;
+            
+            --border: #334155;
+            --shadow-lg: 0 10px 25px -5px rgb(0 0 0 / 0.5);
+        }
+
+        /* RESET & BASE */
+        * { box-sizing: border-box; margin: 0; padding: 0; -webkit-tap-highlight-color: transparent; }
+        
+        body {
+            font-family: 'Inter', sans-serif;
+            background-color: var(--bg-body);
+            color: var(--text-main);
+            min-height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 20px;
+            transition: background-color 0.3s ease, color 0.3s ease;
+        }
+
+        /* LAYOUT */
+        .app-wrapper {
+            width: 100%;
+            max-width: 600px;
+            margin: 0 auto;
+            display: flex;
+            flex-direction: column;
+            gap: 1.5rem;
+        }
+
+        /* MAIN CARD */
+        .card {
+            background: var(--bg-card);
+            border-radius: var(--radius-lg);
+            box-shadow: var(--shadow-lg);
+            border: 1px solid var(--border);
+            padding: 2rem;
+            position: relative;
+            overflow: hidden;
+            transition: transform 0.3s ease, box-shadow 0.3s ease;
+        }
+
+        /* HEADER */
+        .header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 2rem;
+        }
+        .brand {
+            font-size: 1.5rem;
+            font-weight: 800;
+            letter-spacing: -0.5px;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+        .brand-dot { color: var(--primary); }
+        
+        .controls-top { display: flex; gap: 0.5rem; }
+        
+        .btn-icon {
+            width: 40px; height: 40px;
+            border-radius: 50%;
+            border: 1px solid var(--border);
+            background: transparent;
+            color: var(--text-muted);
+            cursor: pointer;
+            display: grid;
+            place-items: center;
+            transition: all 0.2s var(--transition);
+        }
+        .btn-icon:hover { background: var(--bg-input); color: var(--primary); border-color: var(--primary); }
+
+        /* SEGMENTED TABS */
+        .tabs-container {
+            background: var(--bg-input);
+            padding: 5px;
+            border-radius: var(--radius-md);
+            display: flex;
+            margin-bottom: 2rem;
+            position: relative;
+            border: 1px solid var(--border);
+        }
+        .tab-btn {
+            flex: 1;
+            border: none;
+            background: transparent;
+            padding: 10px;
+            font-family: inherit;
+            font-weight: 600;
+            font-size: 0.95rem;
+            color: var(--text-muted);
+            cursor: pointer;
+            border-radius: var(--radius-sm);
+            z-index: 2;
+            transition: color 0.3s ease;
+        }
+        .tab-btn.active { color: var(--text-main); }
+        
+        .tab-indicator {
+            position: absolute;
+            top: 5px; left: 5px;
+            width: calc(50% - 5px);
+            height: calc(100% - 10px);
+            background: var(--bg-card);
+            border-radius: var(--radius-sm);
+            box-shadow: var(--shadow-sm);
+            transition: transform 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+            z-index: 1;
+        }
+        [data-mode="wheel"] .tab-indicator { transform: translateX(100%); }
+        
+        /* INPUT AREA */
+        .config-section {
+            display: flex;
+            flex-direction: column;
+            gap: 1.5rem;
+        }
+
+        .inputs-row {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 1rem;
+        }
+
+        .input-wrapper {
+            position: relative;
+        }
+        
+        .input-label {
+            font-size: 0.75rem;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            font-weight: 700;
+            color: var(--text-muted);
+            margin-bottom: 0.5rem;
+            display: block;
+        }
+
+        .input-field {
+            width: 100%;
+            background: var(--bg-input);
+            border: 1px solid var(--border);
+            border-radius: var(--radius-sm);
+            padding: 1rem;
+            font-size: 1.1rem;
+            font-family: 'JetBrains Mono', monospace;
+            font-weight: 600;
+            color: var(--text-main);
+            text-align: center;
+            transition: all 0.2s ease;
+        }
+        .input-field:focus {
+            outline: none;
+            background: var(--bg-card);
+            border-color: var(--primary);
+            box-shadow: 0 0 0 4px var(--primary-light);
+        }
+        .input-field.error {
+            border-color: var(--text-error);
+            background: rgba(239, 68, 68, 0.05);
+        }
+
+        /* Error Message */
+        .error-msg {
+            color: var(--text-error);
+            font-size: 0.85rem;
+            font-weight: 500;
+            text-align: center;
+            padding: 0.5rem;
+            background: rgba(239, 68, 68, 0.1);
+            border-radius: var(--radius-sm);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 6px;
+        }
+
+        /* PRESETS (Chips) */
+        .presets-list {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 0.5rem;
+            justify-content: center;
+        }
+        .chip {
+            background: var(--bg-input);
+            border: 1px solid var(--border);
+            padding: 6px 14px;
+            border-radius: 20px;
+            font-size: 0.85rem;
+            font-weight: 500;
+            color: var(--text-muted);
+            cursor: pointer;
+            transition: all 0.2s ease;
+            user-select: none;
+        }
+        .chip:hover { background: var(--border); color: var(--text-main); }
+        .chip.active {
+            background: var(--primary-light);
+            color: var(--primary);
+            border-color: var(--primary);
+            font-weight: 600;
+        }
+
+        /* ACTION AREA */
+        .action-area {
+            margin-top: 2rem;
+            text-align: center;
+        }
+
+        /* RESULT DISPLAY */
+        .result-box {
+            background: var(--bg-input);
+            border-radius: var(--radius-md);
+            padding: 2rem 1rem;
+            margin-bottom: 1.5rem;
+            position: relative;
+            border: 1px solid var(--border);
+            min-height: 140px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .result-title {
+            font-size: 0.8rem;
+            color: var(--text-muted);
+            margin-bottom: 0.5rem;
+            font-weight: 600;
+        }
+
+        .result-value {
+            font-family: 'JetBrains Mono', monospace;
+            font-size: clamp(3rem, 8vw, 5rem);
+            font-weight: 800;
+            color: var(--text-main);
+            line-height: 1;
+        }
+
+        /* BUTTONS */
+        .btn-primary {
+            width: 100%;
+            background: var(--primary);
+            color: white;
+            border: none;
+            padding: 1rem;
+            font-size: 1.1rem;
+            font-weight: 600;
+            border-radius: var(--radius-md);
+            cursor: pointer;
+            box-shadow: 0 4px 6px -1px rgba(79, 70, 229, 0.3);
+            transition: transform 0.1s, box-shadow 0.2s, background 0.2s;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 10px;
+        }
+        .btn-primary:hover:not(:disabled) { background: var(--primary-hover); transform: translateY(-2px); box-shadow: 0 8px 15px -3px rgba(79, 70, 229, 0.4); }
+        .btn-primary:active:not(:disabled) { transform: translateY(0); }
+        .btn-primary:disabled { opacity: 0.5; cursor: not-allowed; transform: none; box-shadow: none; background: var(--text-muted); }
+
+        /* WHEEL SPECIFIC */
+        .wheel-stage {
+            position: relative;
+            width: 280px;
+            height: 280px;
+            margin: 0 auto 1.5rem auto;
+        }
+        
+        /* REMOVED transition from here. JS now handles frame-by-frame animation */
+        .wheel-svg {
+            width: 100%; height: 100%;
+            border-radius: 50%;
+            box-shadow: var(--shadow-lg), inset 0 0 0 8px rgba(255,255,255,0.2);
+            transform: rotate(-90deg); /* Start at 12 o'clock visually */
+        }
+        
+        .pointer {
+            position: absolute;
+            top: -10px; left: 50%;
+            transform: translateX(-50%);
+            width: 24px; height: 32px;
+            z-index: 10;
+            filter: drop-shadow(0 2px 3px rgba(0,0,0,0.3));
+        }
+        .wheel-center {
+            position: absolute;
+            top: 50%; left: 50%;
+            transform: translate(-50%, -50%);
+            width: 60px; height: 60px;
+            background: var(--bg-card);
+            border-radius: 50%;
+            box-shadow: 0 4px 10px rgba(0,0,0,0.2);
+            z-index: 5;
+            display: grid;
+            place-items: center;
+            font-weight: 800;
+            color: var(--primary);
+            border: 4px solid var(--bg-body);
+        }
+        
+        /* Speed Controls */
+        .speed-control-wrapper {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            margin-bottom: 1.5rem;
+        }
+        .speed-options {
+            display: flex;
+            background: var(--bg-input);
+            border: 1px solid var(--border);
+            border-radius: var(--radius-sm);
+            padding: 4px;
+            gap: 4px;
+        }
+        .speed-btn {
+            padding: 6px 12px;
+            border: none;
+            background: transparent;
+            color: var(--text-muted);
+            font-size: 0.8rem;
+            font-weight: 600;
+            border-radius: 8px;
+            cursor: pointer;
+            transition: all 0.2s ease;
+        }
+        .speed-btn.active {
+            background: var(--bg-card);
+            color: var(--primary);
+            box-shadow: var(--shadow-sm);
+        }
+
+        /* ALERTS */
+        .toast {
+            position: fixed;
+            bottom: 20px;
+            left: 50%;
+            transform: translateX(-50%) translateY(100px);
+            background: var(--text-main);
+            color: var(--bg-card);
+            padding: 12px 24px;
+            border-radius: 50px;
+            font-weight: 500;
+            font-size: 0.9rem;
+            opacity: 0;
+            transition: all 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+            z-index: 100;
+            box-shadow: 0 10px 20px rgba(0,0,0,0.2);
+        }
+        .toast.show { transform: translateX(-50%) translateY(0); opacity: 1; }
+
+        /* HIDE/SHOW SECTIONS */
+        .hidden { display: none !important; }
+        
+        /* ANIMATIONS */
+        @keyframes popIn {
+            0% { transform: scale(0.8); opacity: 0; }
+            100% { transform: scale(1); opacity: 1; }
+        }
+        .anim-pop { animation: popIn 0.3s cubic-bezier(0.34, 1.56, 0.64, 1); }
+
+    </style>
+</head>
+<body>
+
+<div class="app-wrapper">
+    
+    <!-- HEADER -->
+    <header class="header">
+        <div class="brand">
+            <span>RandPicker</span><span class="brand-dot">.Pro</span>
+        </div>
+        <div class="controls-top">
+            <button class="btn-icon" id="btn-sound" title="Toggle Sound">
+                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M11 5 6 9H2v6h4l5 4z"/><path d="M19.07 4.93a10 10 0 0 1 0 14.14M15.54 8.46a5 5 0 0 1 0 7.07"/></svg>
+            </button>
+            <button class="btn-icon" id="btn-theme" title="Switch Theme">
+                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="5"/><path d="M12 1v2M12 21v2M4.22 4.22l1.42 1.42M18.36 18.36l1.42 1.42M1 12h2M21 12h2M4.22 19.78l1.42-1.42M18.36 5.64l1.42-1.42"/></svg>
+            </button>
+        </div>
+    </header>
+
+    <!-- MAIN CARD -->
+    <main class="card" id="main-card">
+        
+        <!-- MODE TABS -->
+        <div class="tabs-container" id="mode-container" data-mode="normal">
+            <div class="tab-indicator"></div>
+            <button class="tab-btn active" data-target="normal">Number</button>
+            <button class="tab-btn" data-target="wheel">Wheel</button>
+        </div>
+
+        <!-- CONFIGURATION (Shared Inputs) -->
+        <section class="config-section">
+            
+            <!-- INPUTS -->
+            <div class="inputs-row">
+                <div class="input-wrapper">
+                    <label class="input-label" for="inp-min">Min</label>
+                    <input type="number" id="inp-min" class="input-field" value="1">
+                </div>
+                <div class="input-wrapper">
+                    <label class="input-label" for="inp-max">Max</label>
+                    <input type="number" id="inp-max" class="input-field" value="10">
+                </div>
+            </div>
+            
+            <!-- Validation Message Container -->
+            <div id="error-container" class="error-msg hidden">
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"></circle><line x1="12" y1="8" x2="12" y2="12"></line><line x1="12" y1="16" x2="12.01" y2="16"></line></svg>
+                <span id="error-text">Error message goes here</span>
+            </div>
+
+            <!-- PRESETS -->
+            <div class="presets-list" id="presets-list">
+                <!-- JS populates chips here -->
+            </div>
+
+        </section>
+
+        <!-- NORMAL MODE VIEW -->
+        <section id="view-normal" class="action-area">
+            <div class="result-box">
+                <span class="result-title">Generated Result</span>
+                <div id="result-display" class="result-value">--</div>
+            </div>
+            <button id="btn-generate" class="btn-primary">
+                Generate Number
+            </button>
+        </section>
+
+        <!-- WHEEL MODE VIEW -->
+        <section id="view-wheel" class="action-area hidden">
+            
+            <!-- SPEED CONTROL -->
+            <div class="speed-control-wrapper">
+                <label class="input-label">Spin Duration (Full Speed Phase)</label>
+                <div class="speed-options" id="speed-controls">
+                    <button class="speed-btn" data-speed="slow">Long</button>
+                    <button class="speed-btn active" data-speed="standard">Standard</button>
+                    <button class="speed-btn" data-speed="fast">Short</button>
+                </div>
+            </div>
+
+            <div class="wheel-stage">
+                <!-- Pointer SVG -->
+                <svg class="pointer" viewBox="0 0 24 32">
+                    <path d="M12 32 L0 0 L24 0 Z" fill="#ef4444" />
+                </svg>
+                
+                <!-- Center Hub -->
+                <div class="wheel-center">
+                    <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 2v20M2 12h20"/></svg>
+                </div>
+
+                <!-- Wheel Container -->
+                <div id="wheel-container" style="width:100%; height:100%;">
+                    <!-- SVG Wheel Injected Here -->
+                </div>
+            </div>
+            
+            <div style="margin-bottom: 1rem;">
+                 <span id="wheel-result-label" style="font-size: 1.5rem; font-weight: 800; display: block; min-height: 2rem;">Ready</span>
+            </div>
+
+            <button id="btn-spin" class="btn-primary">
+                Spin Wheel
+            </button>
+        </section>
+
+    </main>
+
+    <!-- Toast Notification -->
+    <div id="toast" class="toast">Message here</div>
+
+</div>
+
+<script>
+    /**
+     * 🛠️ APP CONFIGURATION
+     */
+    const CONFIG = {
+        limits: { normal: 1000000, wheel: 50 }, 
+        colors: [
+            '#6366f1', '#8b5cf6', '#ec4899', '#f43f5e', 
+            '#f97316', '#f59e0b', '#10b981', '#06b6d4', 
+            '#3b82f6', '#64748b'
+        ],
+        presets: [
+            { label: '1-6', min: 1, max: 6 },
+            { label: '1-10', min: 1, max: 10 },
+            { label: '1-20', min: 1, max: 20 },
+            { label: '1-50', min: 1, max: 50 },
+            { label: '1-100', min: 1, max: 100 },
+            { label: '0-1 (Coin)', min: 0, max: 1 },
+        ],
+        // Configuration for physics animation
+        physics: {
+            accelTime: 800,    // 0.8s to ramp up
+            decelTime: 3500,   // 3.5s to ramp down
+            maxSpeed: 720,     // Degrees per second (2 rotations/sec)
+            // Middle phase durations
+            durations: {
+                slow: 5000,
+                standard: 2500,
+                fast: 1000
+            }
+        }
+    };
+
+    const STATE = {
+        mode: 'normal', // 'normal' | 'wheel'
+        min: 1,
+        max: 10,
+        sound: true,
+        isSpinning: false,
+        wheelRotation: 0,
+        speed: 'standard'
+    };
+
+    const AUDIO = new (window.AudioContext || window.webkitAudioContext)();
+
+    /**
+     * 🖱️ DOM ELEMENTS
+     */
+    const els = {
+        inputs: { min: document.getElementById('inp-min'), max: document.getElementById('inp-max') },
+        presets: document.getElementById('presets-list'),
+        tabs: document.querySelectorAll('.tab-btn'),
+        tabContainer: document.getElementById('mode-container'),
+        views: { normal: document.getElementById('view-normal'), wheel: document.getElementById('view-wheel') },
+        buttons: { gen: document.getElementById('btn-generate'), spin: document.getElementById('btn-spin'), theme: document.getElementById('btn-theme'), sound: document.getElementById('btn-sound') },
+        display: { normal: document.getElementById('result-display'), wheelLabel: document.getElementById('wheel-result-label') },
+        wheel: document.getElementById('wheel-container'),
+        error: { container: document.getElementById('error-container'), text: document.getElementById('error-text') },
+        toast: document.getElementById('toast'),
+        speedOpts: document.getElementById('speed-controls')
+    };
+
+    /**
+     * ⚙️ INITIALIZATION
+     */
+    function init() {
+        renderPresets();
+        setupEventListeners();
+        validateInputs(); // Initial check
+        drawWheel();
+        
+        // Check OS Theme
+        if (window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches) {
+            document.documentElement.setAttribute('data-theme', 'dark');
+        }
+    }
+
+    /**
+     * 🎮 CONTROLLER & LOGIC
+     */
+
+    function setupEventListeners() {
+        // Mode Switching
+        els.tabs.forEach(btn => {
+            btn.addEventListener('click', () => switchMode(btn.dataset.target));
+        });
+
+        // Speed Control
+        els.speedOpts.querySelectorAll('.speed-btn').forEach(btn => {
+            btn.addEventListener('click', (e) => {
+                if(STATE.isSpinning) return;
+                STATE.speed = e.target.dataset.speed;
+                // Update UI
+                els.speedOpts.querySelectorAll('.speed-btn').forEach(b => b.classList.remove('active'));
+                e.target.classList.add('active');
+            });
+        });
+
+        // Input Handling
+        [els.inputs.min, els.inputs.max].forEach(input => {
+            input.addEventListener('input', validateInputs);
+        });
+
+        // Actions
+        els.buttons.gen.addEventListener('click', generateNumber);
+        els.buttons.spin.addEventListener('click', spinWheel);
+        
+        // Utility
+        els.buttons.theme.addEventListener('click', toggleTheme);
+        els.buttons.sound.addEventListener('click', toggleSound);
+    }
+
+    function switchMode(mode) {
+        if (STATE.isSpinning) return;
+        
+        STATE.mode = mode;
+        els.tabContainer.setAttribute('data-mode', mode);
+        
+        // Toggle Active Classes on Tabs
+        els.tabs.forEach(t => {
+            t.classList.toggle('active', t.dataset.target === mode);
+        });
+
+        // Switch View Visibility
+        if (mode === 'normal') {
+            els.views.normal.classList.remove('hidden');
+            els.views.wheel.classList.add('hidden');
+        } else {
+            els.views.normal.classList.add('hidden');
+            els.views.wheel.classList.remove('hidden');
+        }
+        validateInputs(); // Re-validate immediately on mode switch
+    }
+
+    function validateInputs() {
+        const minRaw = els.inputs.min.value;
+        const maxRaw = els.inputs.max.value;
+        
+        // Clear previous error states
+        els.error.container.classList.add('hidden');
+        els.inputs.min.classList.remove('error');
+        els.inputs.max.classList.remove('error');
+        els.buttons.gen.disabled = false;
+        els.buttons.spin.disabled = false;
+
+        // 1. Empty Check
+        if (minRaw === '' || maxRaw === '') {
+            showError("Please enter both numbers.");
+            return;
+        }
+
+        const min = parseInt(minRaw);
+        const max = parseInt(maxRaw);
+
+        // 2. Logic Check (Min > Max)
+        if (min > max) {
+            showError("Min cannot be greater than Max.");
+            els.inputs.min.classList.add('error');
+            els.inputs.max.classList.add('error');
+            return;
+        }
+
+        // 3. Limit Checks based on Mode
+        const range = max - min + 1;
+
+        if (STATE.mode === 'wheel') {
+            if (range > CONFIG.limits.wheel) {
+                showError(`Wheel supports max ${CONFIG.limits.wheel} items (Currently ${range}).`);
+                els.inputs.max.classList.add('error');
+                return;
+            }
+            if (range < 2) {
+                showError("Wheel needs at least 2 options.");
+                return;
+            }
+        } else {
+            // Normal Mode Limits
+            if (range > CONFIG.limits.normal) {
+                showError("Range is too large for browser performance.");
+                return;
+            }
+        }
+
+        // If valid, update state
+        STATE.min = min;
+        STATE.max = max;
+        
+        updatePresetUI();
+        
+        // Only redraw wheel if valid and in wheel mode
+        if (STATE.mode === 'wheel' && !STATE.isSpinning) {
+            drawWheel();
+        }
+    }
+
+    function showError(msg) {
+        els.error.text.textContent = msg;
+        els.error.container.classList.remove('hidden');
+        els.buttons.gen.disabled = true;
+        els.buttons.spin.disabled = true;
+    }
+
+    function renderPresets() {
+        els.presets.innerHTML = '';
+        CONFIG.presets.forEach(p => {
+            const chip = document.createElement('div');
+            chip.className = 'chip';
+            chip.textContent = p.label;
+            chip.dataset.min = p.min;
+            chip.dataset.max = p.max;
+            chip.onclick = () => applyPreset(p.min, p.max);
+            els.presets.appendChild(chip);
+        });
+    }
+
+    function applyPreset(min, max) {
+        if (STATE.isSpinning) return;
+        els.inputs.min.value = min;
+        els.inputs.max.value = max;
+        validateInputs();
+    }
+
+    function updatePresetUI() {
+        const chips = els.presets.querySelectorAll('.chip');
+        chips.forEach(c => {
+            const isMatch = parseInt(c.dataset.min) === STATE.min && parseInt(c.dataset.max) === STATE.max;
+            c.classList.toggle('active', isMatch);
+        });
+    }
+
+    function getSecureRandom(min, max) {
+        const array = new Uint32Array(1);
+        window.crypto.getRandomValues(array);
+        return Math.floor((array[0] / (0xFFFFFFFF + 1)) * (max - min + 1)) + min;
+    }
+
+    /**
+     * 🎲 GENERATOR LOGIC
+     */
+    function generateNumber() {
+        // Visual reset
+        els.display.normal.classList.remove('anim-pop');
+        void els.display.normal.offsetWidth; // trigger reflow
+
+        const target = getSecureRandom(STATE.min, STATE.max);
+        
+        // Digital Shuffle Effect
+        let steps = 10;
+        const interval = setInterval(() => {
+            els.display.normal.textContent = getSecureRandom(STATE.min, STATE.max);
+            steps--;
+            playTick(800 + (steps * 100)); // Pitch goes down
+            
+            if (steps <= 0) {
+                clearInterval(interval);
+                els.display.normal.textContent = target;
+                els.display.normal.classList.add('anim-pop');
+                playWin();
+            }
+        }, 50);
+    }
+
+    /**
+     * 🎡 WHEEL LOGIC
+     */
+    function drawWheel() {
+        const count = STATE.max - STATE.min + 1;
+        const sliceDeg = 360 / count;
+        let svg = `<svg class="wheel-svg" viewBox="0 0 100 100" style="transform: rotate(${STATE.wheelRotation}deg);">`;
+        
+        for (let i = 0; i < count; i++) {
+            const startAngle = i * sliceDeg;
+            const endAngle = (i + 1) * sliceDeg;
+            
+            // SVG Path Math
+            const x1 = 50 + 50 * Math.cos(Math.PI * (startAngle - 90) / 180);
+            const y1 = 50 + 50 * Math.sin(Math.PI * (startAngle - 90) / 180);
+            const x2 = 50 + 50 * Math.cos(Math.PI * (endAngle - 90) / 180);
+            const y2 = 50 + 50 * Math.sin(Math.PI * (endAngle - 90) / 180);
+            
+            const path = count === 1 
+                ? `M 50 50 L 50 0 A 50 50 0 1 1 49.99 0 Z` // Full circle fallback
+                : `M 50 50 L ${x1} ${y1} A 50 50 0 0 1 ${x2} ${y2} Z`;
+
+            const color = CONFIG.colors[i % CONFIG.colors.length];
+            
+            // Text Positioning
+            const midAngle = startAngle + sliceDeg / 2;
+            const tx = 50 + 38 * Math.cos(Math.PI * (midAngle - 90) / 180);
+            const ty = 50 + 38 * Math.sin(Math.PI * (midAngle - 90) / 180);
+
+            svg += `<path d="${path}" fill="${color}" stroke="white" stroke-width="0.5" />`;
+            // Only show text if there's room
+            if (count < 40) {
+                svg += `<text x="${tx}" y="${ty}" fill="white" 
+                        font-size="${Math.max(3, 10 - count * 0.2)}" 
+                        font-weight="bold" text-anchor="middle" dominant-baseline="middle" 
+                        transform="rotate(${midAngle}, ${tx}, ${ty})">${STATE.min + i}</text>`;
+            }
+        }
+        svg += `</svg>`;
+        els.wheel.innerHTML = svg;
+    }
+
+    function spinWheel() {
+        if (STATE.isSpinning) return;
+        STATE.isSpinning = true;
+        els.buttons.spin.disabled = true;
+        els.display.wheelLabel.textContent = "...";
+
+        const target = getSecureRandom(STATE.min, STATE.max);
+        const count = STATE.max - STATE.min + 1;
+        const sliceDeg = 360 / count;
+        const index = target - STATE.min;
+
+        // --- PHYSICS CALCULATION ---
+
+        // 1. Define Constants
+        const maxSpeed = CONFIG.physics.maxSpeed; 
+        const accelTime = CONFIG.physics.accelTime / 1000; // seconds
+        const decelTime = CONFIG.physics.decelTime / 1000; // seconds
+        
+        // "Full Speed" Phase duration from user selection
+        const spinDuration = CONFIG.physics.durations[STATE.speed] / 1000; // seconds
+        
+        // 2. Calculate Distances for Accel & Decel Phases
+        // EaseInQuad (Accel): Avg Speed = MaxSpeed / 2
+        const accelDist = 0.5 * maxSpeed * accelTime;
+        
+        // EaseOutCubic (Decel): Avg Speed = MaxSpeed / 3
+        // This ensures velocity continuity at the transition (v = maxSpeed)
+        // and provides a "softer" landing curve than Quad.
+        const decelDist = (1/3) * maxSpeed * decelTime;
+        
+        const minRotation = accelDist + decelDist;
+
+        // 3. Calculate Target Geometry
+        const baseTargetAngle = index * sliceDeg + (sliceDeg / 2);
+        // Random drift inside the slice (±40%)
+        const drift = (Math.random() - 0.5) * (sliceDeg * 0.8);
+        const finalTargetAngle = baseTargetAngle + drift;
+
+        const currentRot = STATE.wheelRotation % 360;
+        // Visual top is 0deg. To bring finalTargetAngle to 0deg, we rotate forward by (360 - target).
+        let distToTarget = (360 - finalTargetAngle) - currentRot;
+        while(distToTarget < 0) distToTarget += 360;
+
+        // 4. Calculate Exact Constant Phase Distance
+        // We want total rotation ≈ minRotation + (spinDuration * maxSpeed)
+        // But it must land exactly on 'distToTarget' modulo 360.
+        const approxTotal = minRotation + (spinDuration * maxSpeed);
+        
+        // Calculate how many full 360 rotations fit in approxTotal, adjusted for alignment
+        // Total = k * 360 + distToTarget
+        // We want smallest k such that Total >= approxTotal
+        let finalTotalRotation = distToTarget;
+        while(finalTotalRotation < approxTotal) {
+            finalTotalRotation += 360;
+        }
+
+        // 5. Derived Exact parameters for the constant phase
+        const constantDist = finalTotalRotation - accelDist - decelDist;
+        const constantTime = constantDist / maxSpeed;
+
+        // --- ANIMATION LOOP ---
+        const startRot = STATE.wheelRotation;
+        let startTime = null;
+
+        function animate(timestamp) {
+            if (!startTime) startTime = timestamp;
+            const t = (timestamp - startTime) / 1000; // Time in seconds
+            
+            let currentDist = 0;
+
+            if (t < accelTime) {
+                // Phase 1: Accel (Ease In Quad)
+                const p = t / accelTime;
+                currentDist = accelDist * (p * p);
+            } 
+            else if (t < accelTime + constantTime) {
+                // Phase 2: Constant Speed
+                const t_const = t - accelTime;
+                currentDist = accelDist + (maxSpeed * t_const);
+            } 
+            else if (t < accelTime + constantTime + decelTime) {
+                // Phase 3: Decel (Ease Out Cubic)
+                const t_decel = t - (accelTime + constantTime);
+                const p = t_decel / decelTime;
+                // EaseOutCubic: 1 - (1-p)^3
+                const ease = 1 - Math.pow(1 - p, 3);
+                currentDist = accelDist + constantDist + (decelDist * ease);
+            } 
+            else {
+                // Finished
+                currentDist = finalTotalRotation;
+                STATE.wheelRotation = startRot + finalTotalRotation;
+                
+                // Update DOM final position
+                const svgEl = els.wheel.querySelector('svg');
+                if(svgEl) svgEl.style.transform = `rotate(${STATE.wheelRotation}deg)`;
+                
+                // DELAY RESULT FEEDBACK
+                setTimeout(() => {
+                    STATE.isSpinning = false;
+                    els.buttons.spin.disabled = false;
+                    els.display.wheelLabel.textContent = target;
+                    playWin();
+                }, 500); // 500ms delay
+                
+                return; // Stop loop
+            }
+
+            STATE.wheelRotation = startRot + currentDist;
+            const svgEl = els.wheel.querySelector('svg');
+            if(svgEl) {
+                // Remove transition for JS animation
+                svgEl.style.transition = 'none';
+                svgEl.style.transform = `rotate(${STATE.wheelRotation}deg)`;
+            }
+            
+            requestAnimationFrame(animate);
+        }
+
+        requestAnimationFrame(animate);
+    }
+
+
+    /**
+     * 🔊 AUDIO & UTILS
+     */
+    function toggleSound() {
+        STATE.sound = !STATE.sound;
+        els.buttons.sound.style.opacity = STATE.sound ? 1 : 0.5;
+        showToast(STATE.sound ? "Sound On" : "Sound Off");
+    }
+
+    function toggleTheme() {
+        const isDark = document.documentElement.getAttribute('data-theme') === 'dark';
+        document.documentElement.setAttribute('data-theme', isDark ? 'light' : 'dark');
+    }
+
+    function showToast(msg) {
+        els.toast.textContent = msg;
+        els.toast.classList.add('show');
+        setTimeout(() => els.toast.classList.remove('show'), 2500);
+    }
+
+    function playTick(freq) {
+        if (!STATE.sound) return;
+        if (AUDIO.state === 'suspended') AUDIO.resume();
+        const osc = AUDIO.createOscillator();
+        const gain = AUDIO.createGain();
+        osc.connect(gain);
+        gain.connect(AUDIO.destination);
+        osc.type = 'triangle';
+        osc.frequency.value = freq || 600;
+        gain.gain.setValueAtTime(0.05, AUDIO.currentTime);
+        gain.gain.exponentialRampToValueAtTime(0.001, AUDIO.currentTime + 0.05);
+        osc.start();
+        osc.stop(AUDIO.currentTime + 0.05);
+    }
+
+    function playWin() {
+        if (!STATE.sound) return;
+        if (AUDIO.state === 'suspended') AUDIO.resume();
+        const osc = AUDIO.createOscillator();
+        const gain = AUDIO.createGain();
+        osc.connect(gain);
+        gain.connect(AUDIO.destination);
+        osc.type = 'sine';
+        osc.frequency.setValueAtTime(440, AUDIO.currentTime);
+        osc.frequency.exponentialRampToValueAtTime(880, AUDIO.currentTime + 0.1);
+        gain.gain.setValueAtTime(0.1, AUDIO.currentTime);
+        gain.gain.exponentialRampToValueAtTime(0.001, AUDIO.currentTime + 0.6);
+        osc.start();
+        osc.stop(AUDIO.currentTime + 0.6);
+    }
+
+    // BOOT
+    init();
+
+</script>
+
+</body>
+</html>
