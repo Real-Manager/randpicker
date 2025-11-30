@@ -3,8 +3,8 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>RandPicker Pro - Professional RNG</title>
-    <meta name="description" content="A professional, clean random number generator and spin wheel.">
+    <title>RandPicker & TimeCalc - Tools Suite</title>
+    <meta name="description" content="A professional random number generator, spin wheel, and time calculator.">
     
     <!-- FAVICON -->
     <link rel="icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><text y=%22.9em%22 font-size=%2290%22>🎲</text></svg>">
@@ -151,10 +151,11 @@
         }
         .tab-btn.active { color: var(--text-main); }
         
+        /* Updated Tab Indicator Logic for 3 items */
         .tab-indicator {
             position: absolute;
             top: 5px; left: 5px;
-            width: calc(50% - 5px);
+            width: calc(33.33% - 6.5px); /* Adjusted for 3 tabs */
             height: calc(100% - 10px);
             background: var(--bg-card);
             border-radius: var(--radius-sm);
@@ -162,7 +163,9 @@
             transition: transform 0.3s cubic-bezier(0.4, 0, 0.2, 1);
             z-index: 1;
         }
+        [data-mode="normal"] .tab-indicator { transform: translateX(0%); }
         [data-mode="wheel"] .tab-indicator { transform: translateX(100%); }
+        [data-mode="time"] .tab-indicator { transform: translateX(200%); }
         
         /* INPUT AREA */
         .config-section {
@@ -314,6 +317,22 @@
         .btn-primary:hover:not(:disabled) { background: var(--primary-hover); transform: translateY(-2px); box-shadow: 0 8px 15px -3px rgba(79, 70, 229, 0.4); }
         .btn-primary:active:not(:disabled) { transform: translateY(0); }
         .btn-primary:disabled { opacity: 0.5; cursor: not-allowed; transform: none; box-shadow: none; background: var(--text-muted); }
+        
+        .btn-outline {
+            width: 100%;
+            background: transparent;
+            color: var(--primary);
+            border: 2px solid var(--primary);
+            padding: 0.8rem;
+            font-size: 1rem;
+            font-weight: 600;
+            border-radius: var(--radius-md);
+            cursor: pointer;
+            transition: all 0.2s ease;
+        }
+        .btn-outline:hover {
+            background: var(--primary-light);
+        }
 
         /* WHEEL SPECIFIC */
         .wheel-stage {
@@ -323,7 +342,6 @@
             margin: 0 auto 1.5rem auto;
         }
         
-        /* REMOVED transition from here. JS now handles frame-by-frame animation */
         .wheel-svg {
             width: 100%; height: 100%;
             border-radius: 50%;
@@ -425,7 +443,7 @@
     <!-- HEADER -->
     <header class="header">
         <div class="brand">
-            <span>RandPicker</span><span class="brand-dot">.Pro</span>
+            <span>RandPicker</span><span class="brand-dot">& TimeCalc</span>
         </div>
         <div class="controls-top">
             <button class="btn-icon" id="btn-sound" title="Toggle Sound">
@@ -445,10 +463,11 @@
             <div class="tab-indicator"></div>
             <button class="tab-btn active" data-target="normal">Number</button>
             <button class="tab-btn" data-target="wheel">Wheel</button>
+            <button class="tab-btn" data-target="time">Time</button>
         </div>
 
-        <!-- CONFIGURATION (Shared Inputs) -->
-        <section class="config-section">
+        <!-- SHARED CONFIGURATION (For Number & Wheel) -->
+        <section class="config-section" id="shared-config">
             
             <!-- INPUTS -->
             <div class="inputs-row">
@@ -525,6 +544,38 @@
             </button>
         </section>
 
+        <!-- TIME CONVERTER VIEW (New) -->
+        <section id="view-time" class="action-area hidden" style="margin-top: 0;">
+            
+            <!-- Time Inputs -->
+            <div class="inputs-row" style="margin-bottom: 1.5rem;">
+                <div class="input-wrapper">
+                    <label class="input-label" for="inp-hours">Hours</label>
+                    <input type="number" id="inp-hours" class="input-field" value="0" min="0">
+                </div>
+                <div class="input-wrapper">
+                    <label class="input-label" for="inp-minutes">Minutes</label>
+                    <input type="number" id="inp-minutes" class="input-field" value="0" min="0">
+                </div>
+            </div>
+
+            <div class="result-box">
+                <span class="result-title">Decimal Hours</span>
+                <div id="time-result-display" class="result-value">0</div>
+            </div>
+
+            <div class="inputs-row">
+                <button id="btn-copy-val" class="btn-primary" style="font-size: 0.95rem;">
+                    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="margin-right:6px"><rect x="9" y="9" width="13" height="13" rx="2" ry="2"></rect><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"></path></svg>
+                    Copy Value
+                </button>
+                <button id="btn-copy-text" class="btn-primary" style="font-size: 0.95rem; background-color: var(--bg-card); color: var(--primary); border: 2px solid var(--primary);">
+                    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="margin-right:6px"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path><polyline points="14 2 14 8 20 8"></polyline><line x1="16" y1="13" x2="8" y2="13"></line><line x1="16" y1="17" x2="8" y2="17"></line><polyline points="10 9 9 9 8 9"></polyline></svg>
+                    Copy Text
+                </button>
+            </div>
+        </section>
+
     </main>
 
     <!-- Toast Notification -->
@@ -566,13 +617,17 @@
     };
 
     const STATE = {
-        mode: 'normal', // 'normal' | 'wheel'
+        mode: 'normal', // 'normal' | 'wheel' | 'time'
         min: 1,
         max: 10,
         sound: true,
         isSpinning: false,
         wheelRotation: 0,
-        speed: 'standard'
+        speed: 'standard',
+        // Time State
+        hours: 0,
+        minutes: 0,
+        totalHours: 0
     };
 
     const AUDIO = new (window.AudioContext || window.webkitAudioContext)();
@@ -581,13 +636,34 @@
      * 🖱️ DOM ELEMENTS
      */
     const els = {
-        inputs: { min: document.getElementById('inp-min'), max: document.getElementById('inp-max') },
+        inputs: { 
+            min: document.getElementById('inp-min'), 
+            max: document.getElementById('inp-max'),
+            hours: document.getElementById('inp-hours'),
+            minutes: document.getElementById('inp-minutes')
+        },
+        sharedConfig: document.getElementById('shared-config'),
         presets: document.getElementById('presets-list'),
         tabs: document.querySelectorAll('.tab-btn'),
         tabContainer: document.getElementById('mode-container'),
-        views: { normal: document.getElementById('view-normal'), wheel: document.getElementById('view-wheel') },
-        buttons: { gen: document.getElementById('btn-generate'), spin: document.getElementById('btn-spin'), theme: document.getElementById('btn-theme'), sound: document.getElementById('btn-sound') },
-        display: { normal: document.getElementById('result-display'), wheelLabel: document.getElementById('wheel-result-label') },
+        views: { 
+            normal: document.getElementById('view-normal'), 
+            wheel: document.getElementById('view-wheel'),
+            time: document.getElementById('view-time') 
+        },
+        buttons: { 
+            gen: document.getElementById('btn-generate'), 
+            spin: document.getElementById('btn-spin'), 
+            theme: document.getElementById('btn-theme'), 
+            sound: document.getElementById('btn-sound'),
+            copyVal: document.getElementById('btn-copy-val'),
+            copyText: document.getElementById('btn-copy-text')
+        },
+        display: { 
+            normal: document.getElementById('result-display'), 
+            wheelLabel: document.getElementById('wheel-result-label'),
+            time: document.getElementById('time-result-display')
+        },
         wheel: document.getElementById('wheel-container'),
         error: { container: document.getElementById('error-container'), text: document.getElementById('error-text') },
         toast: document.getElementById('toast'),
@@ -630,14 +706,38 @@
             });
         });
 
-        // Input Handling
+        // RNG Input Handling
         [els.inputs.min, els.inputs.max].forEach(input => {
             input.addEventListener('input', validateInputs);
+        });
+
+        // Time Input Handling
+        [els.inputs.hours, els.inputs.minutes].forEach(input => {
+            input.addEventListener('input', calculateTime);
+        });
+
+        // Time Input Navigation (Arrows)
+        els.inputs.hours.addEventListener('keydown', (e) => {
+            if (e.key === 'ArrowRight') {
+                e.preventDefault();
+                els.inputs.minutes.focus();
+                els.inputs.minutes.select(); // Optional: selects text when focused
+            }
+        });
+
+        els.inputs.minutes.addEventListener('keydown', (e) => {
+            if (e.key === 'ArrowLeft') {
+                e.preventDefault();
+                els.inputs.hours.focus();
+                els.inputs.hours.select(); // Optional: selects text when focused
+            }
         });
 
         // Actions
         els.buttons.gen.addEventListener('click', generateNumber);
         els.buttons.spin.addEventListener('click', spinWheel);
+        els.buttons.copyVal.addEventListener('click', () => copyTime(false));
+        els.buttons.copyText.addEventListener('click', () => copyTime(true));
         
         // Utility
         els.buttons.theme.addEventListener('click', toggleTheme);
@@ -655,18 +755,29 @@
             t.classList.toggle('active', t.dataset.target === mode);
         });
 
-        // Switch View Visibility
-        if (mode === 'normal') {
-            els.views.normal.classList.remove('hidden');
-            els.views.wheel.classList.add('hidden');
+        // Hide All Views First
+        els.views.normal.classList.add('hidden');
+        els.views.wheel.classList.add('hidden');
+        els.views.time.classList.add('hidden');
+
+        // Logic for specific views
+        if (mode === 'time') {
+            els.sharedConfig.classList.add('hidden'); // Hide min/max inputs
+            els.views.time.classList.remove('hidden'); // Show time view
         } else {
-            els.views.normal.classList.add('hidden');
-            els.views.wheel.classList.remove('hidden');
+            els.sharedConfig.classList.remove('hidden'); // Show min/max inputs
+            if (mode === 'normal') {
+                els.views.normal.classList.remove('hidden');
+            } else if (mode === 'wheel') {
+                els.views.wheel.classList.remove('hidden');
+            }
+            validateInputs(); // Re-validate min/max when switching back
         }
-        validateInputs(); // Re-validate immediately on mode switch
     }
 
     function validateInputs() {
+        if (STATE.mode === 'time') return; // Skip validation for time mode
+
         const minRaw = els.inputs.min.value;
         const maxRaw = els.inputs.max.value;
         
@@ -766,6 +877,44 @@
         const array = new Uint32Array(1);
         window.crypto.getRandomValues(array);
         return Math.floor((array[0] / (0xFFFFFFFF + 1)) * (max - min + 1)) + min;
+    }
+
+    /**
+     * ⏳ TIME CALCULATOR LOGIC
+     */
+    function calculateTime() {
+        const h = parseFloat(els.inputs.hours.value) || 0;
+        const m = parseFloat(els.inputs.minutes.value) || 0;
+        
+        // Logic: h + (m / 60)
+        // We round to 2 decimal places usually, but for hours 4 decimal is safer, 
+        // let's do generic float but formatted nicely
+        const total = h + (m / 60);
+        
+        // Format to remove trailing zeros if integer, else max 2 decimals
+        // e.g. 1.50 -> 1.5, 1.3333 -> 1.33
+        const formatted = parseFloat(total.toFixed(2)); 
+        
+        STATE.totalHours = formatted;
+        els.display.time.textContent = formatted;
+    }
+
+    function copyTime(withText) {
+        const val = els.display.time.textContent;
+        const textToCopy = withText ? `${val} hours` : val;
+        
+        // Fallback for iframe environments if navigator isn't allowed
+        const textArea = document.createElement("textarea");
+        textArea.value = textToCopy;
+        document.body.appendChild(textArea);
+        textArea.select();
+        try {
+            document.execCommand('copy');
+            showToast(`Copied: "${textToCopy}"`);
+        } catch (err) {
+            showToast("Failed to copy");
+        }
+        document.body.removeChild(textArea);
     }
 
     /**
