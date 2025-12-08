@@ -24,6 +24,7 @@
             --text-main: #0f172a;
             --text-muted: #64748b;
             --text-error: #ef4444;
+            --text-warning: #d97706;
             
             --primary: #4f46e5;
             --primary-hover: #4338ca;
@@ -47,6 +48,7 @@
             
             --text-main: #f8fafc;
             --text-muted: #94a3b8;
+            --text-warning: #fbbf24;
             
             --primary: #6366f1; 
             --primary-hover: #818cf8;
@@ -124,6 +126,7 @@
             transition: all 0.2s var(--transition);
         }
         .btn-icon:hover { background: var(--bg-input); color: var(--primary); border-color: var(--primary); }
+        .btn-icon:disabled { opacity: 0.3; cursor: not-allowed; }
 
         /* SEGMENTED TABS */
         .tabs-container {
@@ -149,13 +152,13 @@
             z-index: 2;
             transition: color 0.3s ease;
         }
+        .tab-btn:disabled { cursor: not-allowed; opacity: 0.5; }
         .tab-btn.active { color: var(--text-main); }
         
-        /* Updated Tab Indicator Logic for 3 items */
         .tab-indicator {
             position: absolute;
             top: 5px; left: 5px;
-            width: calc(33.33% - 6.5px); /* Adjusted for 3 tabs */
+            width: calc(33.33% - 6.5px);
             height: calc(100% - 10px);
             background: var(--bg-card);
             border-radius: var(--radius-sm);
@@ -173,6 +176,22 @@
             flex-direction: column;
             gap: 1.5rem;
         }
+
+        .input-mode-switch {
+            display: flex;
+            gap: 1rem;
+            font-size: 0.85rem;
+            color: var(--text-muted);
+            margin-bottom: -10px;
+        }
+        .link-btn {
+            background: none; border: none; padding: 0;
+            color: var(--text-muted); cursor: pointer; text-decoration: underline;
+            font-weight: 600;
+        }
+        .link-btn:hover { color: var(--primary); }
+        .link-btn.active { color: var(--primary); text-decoration: none; cursor: default; }
+        .link-btn:disabled { cursor: not-allowed; opacity: 0.5; color: var(--text-muted); }
 
         .inputs-row {
             display: grid;
@@ -213,24 +232,59 @@
             border-color: var(--primary);
             box-shadow: 0 0 0 4px var(--primary-light);
         }
+        .input-field:disabled { opacity: 0.6; cursor: not-allowed; }
         .input-field.error {
             border-color: var(--text-error);
             background: rgba(239, 68, 68, 0.05);
         }
 
+        /* TEXTAREA FOR ADVANCED MODE */
+        textarea.input-field {
+            min-height: 100px;
+            text-align: left;
+            resize: vertical;
+            line-height: 1.5;
+            font-size: 0.95rem;
+        }
+
+        /* CHECKBOX TOGGLE */
+        .checkbox-wrapper {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            font-size: 0.9rem;
+            font-weight: 500;
+            color: var(--text-main);
+            cursor: pointer;
+            user-select: none;
+            padding: 5px 0;
+        }
+        .checkbox-wrapper input {
+            width: 18px; height: 18px;
+            accent-color: var(--primary);
+            cursor: pointer;
+        }
+
         /* Error Message */
-        .error-msg {
-            color: var(--text-error);
+        .msg-box {
             font-size: 0.85rem;
             font-weight: 500;
             text-align: center;
             padding: 0.5rem;
-            background: rgba(239, 68, 68, 0.1);
             border-radius: var(--radius-sm);
             display: flex;
             align-items: center;
             justify-content: center;
             gap: 6px;
+        }
+        .error-msg {
+            color: var(--text-error);
+            background: rgba(239, 68, 68, 0.1);
+        }
+        /* Warning Message */
+        .warning-msg {
+            color: var(--text-warning);
+            background: rgba(245, 158, 11, 0.1);
         }
 
         /* PRESETS (Chips) */
@@ -259,6 +313,7 @@
             border-color: var(--primary);
             font-weight: 600;
         }
+        .chip.disabled { opacity: 0.5; pointer-events: none; }
 
         /* ACTION AREA */
         .action-area {
@@ -294,6 +349,7 @@
             font-weight: 800;
             color: var(--text-main);
             line-height: 1;
+            word-break: break-all;
         }
 
         /* BUTTONS */
@@ -318,22 +374,6 @@
         .btn-primary:active:not(:disabled) { transform: translateY(0); }
         .btn-primary:disabled { opacity: 0.5; cursor: not-allowed; transform: none; box-shadow: none; background: var(--text-muted); }
         
-        .btn-outline {
-            width: 100%;
-            background: transparent;
-            color: var(--primary);
-            border: 2px solid var(--primary);
-            padding: 0.8rem;
-            font-size: 1rem;
-            font-weight: 600;
-            border-radius: var(--radius-md);
-            cursor: pointer;
-            transition: all 0.2s ease;
-        }
-        .btn-outline:hover {
-            background: var(--primary-light);
-        }
-
         /* WHEEL SPECIFIC */
         .wheel-stage {
             position: relative;
@@ -399,6 +439,7 @@
             cursor: pointer;
             transition: all 0.2s ease;
         }
+        .speed-btn:disabled { cursor: not-allowed; opacity: 0.5; }
         .speed-btn.active {
             background: var(--bg-card);
             color: var(--primary);
@@ -469,8 +510,14 @@
         <!-- SHARED CONFIGURATION (For Number & Wheel) -->
         <section class="config-section" id="shared-config">
             
-            <!-- INPUTS -->
-            <div class="inputs-row">
+            <div class="input-mode-switch">
+                <button id="mode-simple" class="link-btn active">Simple Range</button>
+                <span>|</span>
+                <button id="mode-advanced" class="link-btn">Custom Input</button>
+            </div>
+
+            <!-- SIMPLE INPUTS (Min/Max) -->
+            <div id="input-group-simple" class="inputs-row">
                 <div class="input-wrapper">
                     <label class="input-label" for="inp-min">Min</label>
                     <input type="number" id="inp-min" class="input-field" value="1">
@@ -480,9 +527,28 @@
                     <input type="number" id="inp-max" class="input-field" value="10">
                 </div>
             </div>
+
+            <!-- ADVANCED INPUT (Textarea) -->
+            <div id="input-group-advanced" class="input-wrapper hidden">
+                <label class="input-label" for="inp-advanced">Custom List (e.g. 1-10, 15, 20-25)</label>
+                <textarea id="inp-advanced" class="input-field" placeholder="1-5, 8, 11-15"></textarea>
+            </div>
+
+            <!-- OPT OUT TOGGLE -->
+            <div class="checkbox-wrapper" id="opt-out-container" title="If checked, selected number will be removed from future spins">
+                <label>
+                    <input type="checkbox" id="chk-opt-out"> Remove picked number (Opt-out)
+                </label>
+            </div>
             
+            <!-- Warning Message Container -->
+            <div id="warning-container" class="msg-box warning-msg hidden">
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"></path><line x1="12" y1="9" x2="12" y2="13"></line><line x1="12" y1="17" x2="12.01" y2="17"></line></svg>
+                <span id="warning-text">One or more duplicate numbers detected</span>
+            </div>
+
             <!-- Validation Message Container -->
-            <div id="error-container" class="error-msg hidden">
+            <div id="error-container" class="msg-box error-msg hidden">
                 <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"></circle><line x1="12" y1="8" x2="12" y2="12"></line><line x1="12" y1="16" x2="12.01" y2="16"></line></svg>
                 <span id="error-text">Error message goes here</span>
             </div>
@@ -510,7 +576,7 @@
             
             <!-- SPEED CONTROL -->
             <div class="speed-control-wrapper">
-                <label class="input-label">Spin Duration (Full Speed Phase)</label>
+                <label class="input-label">Spin Duration</label>
                 <div class="speed-options" id="speed-controls">
                     <button class="speed-btn" data-speed="slow">Long</button>
                     <button class="speed-btn active" data-speed="standard">Standard</button>
@@ -539,12 +605,17 @@
                  <span id="wheel-result-label" style="font-size: 1.5rem; font-weight: 800; display: block; min-height: 2rem;">Ready</span>
             </div>
 
-            <button id="btn-spin" class="btn-primary">
-                Spin Wheel
-            </button>
+            <div class="inputs-row">
+                <button id="btn-spin" class="btn-primary">
+                    Spin Wheel
+                </button>
+                <button id="btn-reset-wheel" class="btn-primary" style="background: var(--bg-input); color: var(--text-main); border: 1px solid var(--border);">
+                    Reset
+                </button>
+            </div>
         </section>
 
-        <!-- TIME CONVERTER VIEW (New) -->
+        <!-- TIME CONVERTER VIEW -->
         <section id="view-time" class="action-area hidden" style="margin-top: 0;">
             
             <!-- Time Inputs -->
@@ -588,7 +659,7 @@
      * 🛠️ APP CONFIGURATION
      */
     const CONFIG = {
-        limits: { normal: 1000000, wheel: 50 }, 
+        limits: { normal: 1000000, wheel: 100 }, 
         colors: [
             '#6366f1', '#8b5cf6', '#ec4899', '#f43f5e', 
             '#f97316', '#f59e0b', '#10b981', '#06b6d4', 
@@ -606,8 +677,7 @@
         physics: {
             accelTime: 800,    // 0.8s to ramp up
             decelTime: 3500,   // 3.5s to ramp down
-            maxSpeed: 720,     // Degrees per second (2 rotations/sec)
-            // Middle phase durations
+            maxSpeed: 720,     // Degrees per second
             durations: {
                 slow: 5000,
                 standard: 2500,
@@ -618,12 +688,24 @@
 
     const STATE = {
         mode: 'normal', // 'normal' | 'wheel' | 'time'
+        inputMode: 'simple', // 'simple' | 'advanced'
+        
+        // Data Source
         min: 1,
         max: 10,
+        customString: "1-10",
+        
+        // Active Items (Array used for logic)
+        items: [],
+        
+        // Opt Out
+        optOut: false,
+
         sound: true,
         isSpinning: false,
         wheelRotation: 0,
         speed: 'standard',
+        
         // Time State
         hours: 0,
         minutes: 0,
@@ -639,8 +721,18 @@
         inputs: { 
             min: document.getElementById('inp-min'), 
             max: document.getElementById('inp-max'),
+            advanced: document.getElementById('inp-advanced'),
+            optOut: document.getElementById('chk-opt-out'),
             hours: document.getElementById('inp-hours'),
             minutes: document.getElementById('inp-minutes')
+        },
+        inputGroups: {
+            simple: document.getElementById('input-group-simple'),
+            advanced: document.getElementById('input-group-advanced')
+        },
+        modeSwitches: {
+            simple: document.getElementById('mode-simple'),
+            advanced: document.getElementById('mode-advanced')
         },
         sharedConfig: document.getElementById('shared-config'),
         presets: document.getElementById('presets-list'),
@@ -654,6 +746,7 @@
         buttons: { 
             gen: document.getElementById('btn-generate'), 
             spin: document.getElementById('btn-spin'), 
+            resetWheel: document.getElementById('btn-reset-wheel'),
             theme: document.getElementById('btn-theme'), 
             sound: document.getElementById('btn-sound'),
             copyVal: document.getElementById('btn-copy-val'),
@@ -666,6 +759,7 @@
         },
         wheel: document.getElementById('wheel-container'),
         error: { container: document.getElementById('error-container'), text: document.getElementById('error-text') },
+        warning: { container: document.getElementById('warning-container'), text: document.getElementById('warning-text') },
         toast: document.getElementById('toast'),
         speedOpts: document.getElementById('speed-controls')
     };
@@ -676,7 +770,7 @@
     function init() {
         renderPresets();
         setupEventListeners();
-        validateInputs(); // Initial check
+        regenerateItems(); // Build initial array
         drawWheel();
         
         // Check OS Theme
@@ -690,9 +784,18 @@
      */
 
     function setupEventListeners() {
-        // Mode Switching
+        // App Mode Switching (Number / Wheel / Time)
         els.tabs.forEach(btn => {
-            btn.addEventListener('click', () => switchMode(btn.dataset.target));
+            btn.addEventListener('click', () => switchAppMode(btn.dataset.target));
+        });
+
+        // Input Mode Switching (Simple / Advanced)
+        els.modeSwitches.simple.addEventListener('click', () => switchInputMode('simple'));
+        els.modeSwitches.advanced.addEventListener('click', () => switchInputMode('advanced'));
+
+        // Opt Out Toggle
+        els.inputs.optOut.addEventListener('change', (e) => {
+            STATE.optOut = e.target.checked;
         });
 
         // Speed Control
@@ -700,42 +803,35 @@
             btn.addEventListener('click', (e) => {
                 if(STATE.isSpinning) return;
                 STATE.speed = e.target.dataset.speed;
-                // Update UI
                 els.speedOpts.querySelectorAll('.speed-btn').forEach(b => b.classList.remove('active'));
                 e.target.classList.add('active');
             });
         });
 
-        // RNG Input Handling
+        // Data Inputs
         [els.inputs.min, els.inputs.max].forEach(input => {
-            input.addEventListener('input', validateInputs);
+            input.addEventListener('input', () => {
+                regenerateItems();
+            });
         });
 
-        // Time Input Handling
+        els.inputs.advanced.addEventListener('input', () => {
+            regenerateItems();
+        });
+
+        // Time Inputs
         [els.inputs.hours, els.inputs.minutes].forEach(input => {
             input.addEventListener('input', calculateTime);
-        });
-
-        // Time Input Navigation (Arrows)
-        els.inputs.hours.addEventListener('keydown', (e) => {
-            if (e.key === 'ArrowRight') {
-                e.preventDefault();
-                els.inputs.minutes.focus();
-                els.inputs.minutes.select(); // Optional: selects text when focused
-            }
-        });
-
-        els.inputs.minutes.addEventListener('keydown', (e) => {
-            if (e.key === 'ArrowLeft') {
-                e.preventDefault();
-                els.inputs.hours.focus();
-                els.inputs.hours.select(); // Optional: selects text when focused
-            }
         });
 
         // Actions
         els.buttons.gen.addEventListener('click', generateNumber);
         els.buttons.spin.addEventListener('click', spinWheel);
+        els.buttons.resetWheel.addEventListener('click', () => {
+            regenerateItems();
+            showToast("Wheel Reset");
+        });
+
         els.buttons.copyVal.addEventListener('click', () => copyTime(false));
         els.buttons.copyText.addEventListener('click', () => copyTime(true));
         
@@ -744,98 +840,169 @@
         els.buttons.sound.addEventListener('click', toggleSound);
     }
 
-    function switchMode(mode) {
+    function switchAppMode(mode) {
         if (STATE.isSpinning) return;
         
         STATE.mode = mode;
         els.tabContainer.setAttribute('data-mode', mode);
         
-        // Toggle Active Classes on Tabs
-        els.tabs.forEach(t => {
-            t.classList.toggle('active', t.dataset.target === mode);
-        });
+        els.tabs.forEach(t => t.classList.toggle('active', t.dataset.target === mode));
 
-        // Hide All Views First
-        els.views.normal.classList.add('hidden');
-        els.views.wheel.classList.add('hidden');
-        els.views.time.classList.add('hidden');
+        // Hide All
+        Object.values(els.views).forEach(el => el.classList.add('hidden'));
 
-        // Logic for specific views
+        // Show Specific
         if (mode === 'time') {
-            els.sharedConfig.classList.add('hidden'); // Hide min/max inputs
-            els.views.time.classList.remove('hidden'); // Show time view
+            els.sharedConfig.classList.add('hidden');
+            els.views.time.classList.remove('hidden');
         } else {
-            els.sharedConfig.classList.remove('hidden'); // Show min/max inputs
-            if (mode === 'normal') {
-                els.views.normal.classList.remove('hidden');
-            } else if (mode === 'wheel') {
+            els.sharedConfig.classList.remove('hidden');
+            if (mode === 'normal') els.views.normal.classList.remove('hidden');
+            if (mode === 'wheel') {
                 els.views.wheel.classList.remove('hidden');
+                drawWheel();
             }
-            validateInputs(); // Re-validate min/max when switching back
         }
     }
 
-    function validateInputs() {
-        if (STATE.mode === 'time') return; // Skip validation for time mode
-
-        const minRaw = els.inputs.min.value;
-        const maxRaw = els.inputs.max.value;
+    function switchInputMode(mode) {
+        if(STATE.isSpinning) return;
+        STATE.inputMode = mode;
         
-        // Clear previous error states
+        // Toggle UI Buttons
+        els.modeSwitches.simple.classList.toggle('active', mode === 'simple');
+        els.modeSwitches.advanced.classList.toggle('active', mode === 'advanced');
+
+        // Toggle Input Fields
+        els.inputGroups.simple.classList.toggle('hidden', mode !== 'simple');
+        els.inputGroups.advanced.classList.toggle('hidden', mode !== 'advanced');
+
+        // If switching to advanced for the first time, populate it with current simple range
+        if (mode === 'advanced' && !els.inputs.advanced.value) {
+            els.inputs.advanced.value = `${els.inputs.min.value}-${els.inputs.max.value}`;
+        }
+
+        regenerateItems();
+    }
+
+    // --- CORE DATA PARSING ---
+
+    function parseAdvancedInput(str) {
+        // Supported formats: "1-10", "1, 5, 8", "1-5, 10-15"
+        const items = new Set();
+        const parts = str.split(',');
+        let hasDuplicates = false;
+        
+        for (let part of parts) {
+            part = part.trim();
+            if(!part) continue;
+
+            if (part.includes('-')) {
+                // Range
+                const range = part.split('-').map(n => parseInt(n.trim()));
+                if (range.length === 2 && !isNaN(range[0]) && !isNaN(range[1])) {
+                    const start = Math.min(range[0], range[1]);
+                    const end = Math.max(range[0], range[1]);
+                    // Safety cap for ranges to prevent browser crash
+                    if (end - start > 5000) return { error: "Range too large" }; 
+                    
+                    for (let i = start; i <= end; i++) {
+                        if (items.has(i)) hasDuplicates = true;
+                        items.add(i);
+                    }
+                }
+            } else {
+                // Single Number
+                const num = parseInt(part);
+                if (!isNaN(num)) {
+                    if (items.has(num)) hasDuplicates = true;
+                    items.add(num);
+                }
+            }
+        }
+
+        return { items: Array.from(items), error: null, hasDuplicates };
+    }
+
+    function regenerateItems() {
+        if(STATE.isSpinning) return;
+
+        let newItems = [];
+        let isValid = true;
+        let errorMsg = "";
+        let showWarning = false;
+
+        if (STATE.inputMode === 'simple') {
+            const min = parseInt(els.inputs.min.value);
+            const max = parseInt(els.inputs.max.value);
+            
+            if (isNaN(min) || isNaN(max)) {
+                isValid = false; errorMsg = "Please enter valid numbers.";
+            } else if (min > max) {
+                isValid = false; errorMsg = "Min cannot be greater than Max.";
+            } else {
+                // Populate array
+                if (max - min > 1000) {
+                    newItems = null; // Signal that it's a pure math range
+                    STATE.min = min;
+                    STATE.max = max;
+                } else {
+                    for(let i=min; i<=max; i++) newItems.push(i);
+                }
+            }
+        } else {
+            // Advanced
+            const result = parseAdvancedInput(els.inputs.advanced.value);
+            
+            if (result.error) {
+                isValid = false; 
+                errorMsg = result.error;
+            } else {
+                newItems = result.items;
+                showWarning = result.hasDuplicates;
+                
+                if (newItems.length === 0) {
+                    isValid = false; errorMsg = "No valid numbers found.";
+                }
+            }
+        }
+
+        // VALIDATION & UI FEEDBACK
         els.error.container.classList.add('hidden');
-        els.inputs.min.classList.remove('error');
-        els.inputs.max.classList.remove('error');
+        els.warning.container.classList.add('hidden');
+        
+        if (!isValid) {
+            showError(errorMsg);
+            STATE.items = [];
+            els.buttons.gen.disabled = true;
+            els.buttons.spin.disabled = true;
+            return;
+        }
+
+        // Show Warning if needed
+        if (showWarning) {
+            els.warning.container.classList.remove('hidden');
+        }
+
+        // Enable buttons
         els.buttons.gen.disabled = false;
         els.buttons.spin.disabled = false;
 
-        // 1. Empty Check
-        if (minRaw === '' || maxRaw === '') {
-            showError("Please enter both numbers.");
-            return;
-        }
-
-        const min = parseInt(minRaw);
-        const max = parseInt(maxRaw);
-
-        // 2. Logic Check (Min > Max)
-        if (min > max) {
-            showError("Min cannot be greater than Max.");
-            els.inputs.min.classList.add('error');
-            els.inputs.max.classList.add('error');
-            return;
-        }
-
-        // 3. Limit Checks based on Mode
-        const range = max - min + 1;
-
+        // Limit Checks for Wheel
         if (STATE.mode === 'wheel') {
-            if (range > CONFIG.limits.wheel) {
-                showError(`Wheel supports max ${CONFIG.limits.wheel} items (Currently ${range}).`);
-                els.inputs.max.classList.add('error');
+            const count = newItems ? newItems.length : (STATE.max - STATE.min + 1);
+            if (count > CONFIG.limits.wheel) {
+                showError(`Wheel supports max ${CONFIG.limits.wheel} items (Current: ${count}).`);
                 return;
             }
-            if (range < 2) {
-                showError("Wheel needs at least 2 options.");
-                return;
-            }
-        } else {
-            // Normal Mode Limits
-            if (range > CONFIG.limits.normal) {
-                showError("Range is too large for browser performance.");
+            if (count < 2) {
+                showError("Wheel needs at least 2 items.");
                 return;
             }
         }
 
-        // If valid, update state
-        STATE.min = min;
-        STATE.max = max;
-        
-        updatePresetUI();
-        
-        // Only redraw wheel if valid and in wheel mode
-        if (STATE.mode === 'wheel' && !STATE.isSpinning) {
-            drawWheel();
-        }
+        STATE.items = newItems;
+        if (STATE.mode === 'wheel') drawWheel();
     }
 
     function showError(msg) {
@@ -851,50 +1018,270 @@
             const chip = document.createElement('div');
             chip.className = 'chip';
             chip.textContent = p.label;
-            chip.dataset.min = p.min;
-            chip.dataset.max = p.max;
-            chip.onclick = () => applyPreset(p.min, p.max);
+            chip.onclick = () => {
+                if(STATE.isSpinning) return;
+                switchInputMode('simple');
+                els.inputs.min.value = p.min;
+                els.inputs.max.value = p.max;
+                regenerateItems();
+            };
             els.presets.appendChild(chip);
         });
     }
 
-    function applyPreset(min, max) {
-        if (STATE.isSpinning) return;
-        els.inputs.min.value = min;
-        els.inputs.max.value = max;
-        validateInputs();
-    }
-
-    function updatePresetUI() {
-        const chips = els.presets.querySelectorAll('.chip');
-        chips.forEach(c => {
-            const isMatch = parseInt(c.dataset.min) === STATE.min && parseInt(c.dataset.max) === STATE.max;
-            c.classList.toggle('active', isMatch);
-        });
-    }
-
-    function getSecureRandom(min, max) {
+    function getSecureRandomItem(items) {
+        if (!items) {
+            // Range based fallback
+            const range = STATE.max - STATE.min + 1;
+            const array = new Uint32Array(1);
+            window.crypto.getRandomValues(array);
+            return Math.floor((array[0] / (0xFFFFFFFF + 1)) * range) + STATE.min;
+        }
         const array = new Uint32Array(1);
         window.crypto.getRandomValues(array);
-        return Math.floor((array[0] / (0xFFFFFFFF + 1)) * (max - min + 1)) + min;
+        const idx = Math.floor((array[0] / (0xFFFFFFFF + 1)) * items.length);
+        return items[idx];
     }
 
     /**
-     * ⏳ TIME CALCULATOR LOGIC
+     * 🔒 GLOBAL LOCK (To prevent interaction during spin)
+     */
+    function toggleInteractions(enable) {
+        const elementsToLock = [
+            ...document.querySelectorAll('button'),
+            ...document.querySelectorAll('input'),
+            ...document.querySelectorAll('textarea'),
+            ...document.querySelectorAll('.chip'),
+            ...document.querySelectorAll('.tab-btn')
+        ];
+
+        elementsToLock.forEach(el => {
+            if(enable) {
+                el.disabled = false;
+                el.classList.remove('disabled');
+            } else {
+                el.disabled = true;
+                el.classList.add('disabled');
+            }
+        });
+    }
+
+    /**
+     * 🎲 GENERATOR LOGIC
+     */
+    function generateNumber() {
+        // If items is null, use min/max logic, else use array pick
+        const target = getSecureRandomItem(STATE.items);
+        
+        toggleInteractions(false);
+        els.display.normal.classList.remove('anim-pop');
+        void els.display.normal.offsetWidth;
+
+        let steps = 10;
+        const interval = setInterval(() => {
+            // Fake shuffle numbers
+            const fake = STATE.items ? STATE.items[Math.floor(Math.random()*STATE.items.length)] : Math.floor(Math.random() * (STATE.max - STATE.min) + STATE.min);
+            els.display.normal.textContent = fake;
+            steps--;
+            playTick(800 + (steps * 100));
+            
+            if (steps <= 0) {
+                clearInterval(interval);
+                els.display.normal.textContent = target;
+                els.display.normal.classList.add('anim-pop');
+                playWin();
+                toggleInteractions(true);
+            }
+        }, 50);
+    }
+
+    /**
+     * 🎡 WHEEL LOGIC
+     */
+    function drawWheel() {
+        // If logic is range-based (too huge), we can't draw wheel
+        if (!STATE.items || STATE.items.length === 0) {
+            els.wheel.innerHTML = '<div style="display:flex;height:100%;align-items:center;justify-content:center;color:var(--text-muted);">List empty or too large</div>';
+            return;
+        }
+
+        const items = STATE.items;
+        const count = items.length;
+        const sliceDeg = 360 / count;
+        let svg = `<svg class="wheel-svg" viewBox="0 0 100 100" style="transform: rotate(${STATE.wheelRotation}deg);">`;
+        
+        for (let i = 0; i < count; i++) {
+            const startAngle = i * sliceDeg;
+            const endAngle = (i + 1) * sliceDeg;
+            
+            const x1 = 50 + 50 * Math.cos(Math.PI * (startAngle - 90) / 180);
+            const y1 = 50 + 50 * Math.sin(Math.PI * (startAngle - 90) / 180);
+            const x2 = 50 + 50 * Math.cos(Math.PI * (endAngle - 90) / 180);
+            const y2 = 50 + 50 * Math.sin(Math.PI * (endAngle - 90) / 180);
+            
+            const path = count === 1 
+                ? `M 50 50 L 50 0 A 50 50 0 1 1 49.99 0 Z` 
+                : `M 50 50 L ${x1} ${y1} A 50 50 0 0 1 ${x2} ${y2} Z`;
+
+            const color = CONFIG.colors[i % CONFIG.colors.length];
+            
+            // Text
+            const midAngle = startAngle + sliceDeg / 2;
+            const tx = 50 + 38 * Math.cos(Math.PI * (midAngle - 90) / 180);
+            const ty = 50 + 38 * Math.sin(Math.PI * (midAngle - 90) / 180);
+
+            // Font size logic
+            let fontSize = 4;
+            if (count < 10) fontSize = 8;
+            else if (count < 20) fontSize = 6;
+            
+            // Truncate text if too long
+            let text = items[i].toString();
+            if (text.length > 4 && count > 10) text = text.substring(0,3) + '..';
+
+            svg += `<path d="${path}" fill="${color}" stroke="white" stroke-width="0.5" />`;
+            if (count < 50) {
+                svg += `<text x="${tx}" y="${ty}" fill="white" 
+                        font-size="${fontSize}" 
+                        font-weight="bold" text-anchor="middle" dominant-baseline="middle" 
+                        transform="rotate(${midAngle}, ${tx}, ${ty})">${text}</text>`;
+            }
+        }
+        svg += `</svg>`;
+        els.wheel.innerHTML = svg;
+    }
+
+    function spinWheel() {
+        if (STATE.isSpinning || !STATE.items || STATE.items.length < 2) return;
+        
+        STATE.isSpinning = true;
+        toggleInteractions(false); // BLOCK ALL BUTTONS
+        els.display.wheelLabel.textContent = "...";
+
+        // Random Index
+        const array = new Uint32Array(1);
+        window.crypto.getRandomValues(array);
+        const winIndex = Math.floor((array[0] / (0xFFFFFFFF + 1)) * STATE.items.length);
+        const targetValue = STATE.items[winIndex];
+
+        const count = STATE.items.length;
+        const sliceDeg = 360 / count;
+
+        // Physics Setup
+        const maxSpeed = CONFIG.physics.maxSpeed; 
+        const accelTime = CONFIG.physics.accelTime / 1000; 
+        const decelTime = CONFIG.physics.decelTime / 1000;
+        const spinDuration = CONFIG.physics.durations[STATE.speed] / 1000;
+        
+        const accelDist = 0.5 * maxSpeed * accelTime;
+        const decelDist = (1/3) * maxSpeed * decelTime;
+        const minRotation = accelDist + decelDist;
+
+        // Target Angle
+        const baseTargetAngle = winIndex * sliceDeg + (sliceDeg / 2);
+        const drift = (Math.random() - 0.5) * (sliceDeg * 0.8);
+        const finalTargetAngle = baseTargetAngle + drift;
+
+        const currentRot = STATE.wheelRotation % 360;
+        let distToTarget = (360 - finalTargetAngle) - currentRot;
+        while(distToTarget < 0) distToTarget += 360;
+
+        const approxTotal = minRotation + (spinDuration * maxSpeed);
+        let finalTotalRotation = distToTarget;
+        while(finalTotalRotation < approxTotal) {
+            finalTotalRotation += 360;
+        }
+
+        const constantDist = finalTotalRotation - accelDist - decelDist;
+        const constantTime = constantDist / maxSpeed;
+
+        const startRot = STATE.wheelRotation;
+        let startTime = null;
+
+        function animate(timestamp) {
+            if (!startTime) startTime = timestamp;
+            const t = (timestamp - startTime) / 1000;
+            let currentDist = 0;
+
+            if (t < accelTime) {
+                const p = t / accelTime;
+                currentDist = accelDist * (p * p);
+            } 
+            else if (t < accelTime + constantTime) {
+                const t_const = t - accelTime;
+                currentDist = accelDist + (maxSpeed * t_const);
+            } 
+            else if (t < accelTime + constantTime + decelTime) {
+                const t_decel = t - (accelTime + constantTime);
+                const p = t_decel / decelTime;
+                const ease = 1 - Math.pow(1 - p, 3);
+                currentDist = accelDist + constantDist + (decelDist * ease);
+            } 
+            else {
+                // FINISH
+                currentDist = finalTotalRotation;
+                STATE.wheelRotation = startRot + finalTotalRotation;
+                const svgEl = els.wheel.querySelector('svg');
+                if(svgEl) svgEl.style.transform = `rotate(${STATE.wheelRotation}deg)`;
+                
+                // END LOGIC
+                setTimeout(() => {
+                    playWin();
+                    els.display.wheelLabel.textContent = targetValue;
+                    
+                    // OPT OUT LOGIC
+                    if (STATE.optOut) {
+                        STATE.items.splice(winIndex, 1);
+                        // Update UI to reflect changes if in advanced mode
+                        if (STATE.inputMode === 'advanced') {
+                            // Reconstruct string logic is complex, simpler to just draw wheel from state
+                            // But user expects textarea update? Let's just update wheel for now to avoid complexity
+                            // If items empty
+                            if (STATE.items.length === 0) {
+                                showToast("All items picked!");
+                            } else {
+                                drawWheel();
+                                showToast(`Removed ${targetValue}`);
+                            }
+                        } else {
+                            // Simple mode but we removed an item -> effectively becomes custom list
+                            // But visual simple inputs (min/max) become invalid conceptually.
+                            // We just redraw wheel.
+                             if (STATE.items.length === 0) {
+                                showToast("All items picked!");
+                            } else {
+                                drawWheel();
+                                showToast(`Removed ${targetValue}`);
+                            }
+                        }
+                    }
+
+                    STATE.isSpinning = false;
+                    toggleInteractions(true); // ENABLE BUTTONS
+                }, 500);
+                return;
+            }
+
+            STATE.wheelRotation = startRot + currentDist;
+            const svgEl = els.wheel.querySelector('svg');
+            if(svgEl) {
+                svgEl.style.transition = 'none';
+                svgEl.style.transform = `rotate(${STATE.wheelRotation}deg)`;
+            }
+            requestAnimationFrame(animate);
+        }
+
+        requestAnimationFrame(animate);
+    }
+
+    /**
+     * ⏳ TIME CALCULATOR
      */
     function calculateTime() {
         const h = parseFloat(els.inputs.hours.value) || 0;
         const m = parseFloat(els.inputs.minutes.value) || 0;
-        
-        // Logic: h + (m / 60)
-        // We round to 2 decimal places usually, but for hours 4 decimal is safer, 
-        // let's do generic float but formatted nicely
         const total = h + (m / 60);
-        
-        // Format to remove trailing zeros if integer, else max 2 decimals
-        // e.g. 1.50 -> 1.5, 1.3333 -> 1.33
-        const formatted = parseFloat(total.toFixed(2)); 
-        
+        const formatted = parseFloat(total.toFixed(4)); 
         STATE.totalHours = formatted;
         els.display.time.textContent = formatted;
     }
@@ -903,7 +1290,6 @@
         const val = els.display.time.textContent;
         const textToCopy = withText ? `${val} hours` : val;
         
-        // Fallback for iframe environments if navigator isn't allowed
         const textArea = document.createElement("textarea");
         textArea.value = textToCopy;
         document.body.appendChild(textArea);
@@ -917,200 +1303,7 @@
         document.body.removeChild(textArea);
     }
 
-    /**
-     * 🎲 GENERATOR LOGIC
-     */
-    function generateNumber() {
-        // Visual reset
-        els.display.normal.classList.remove('anim-pop');
-        void els.display.normal.offsetWidth; // trigger reflow
-
-        const target = getSecureRandom(STATE.min, STATE.max);
-        
-        // Digital Shuffle Effect
-        let steps = 10;
-        const interval = setInterval(() => {
-            els.display.normal.textContent = getSecureRandom(STATE.min, STATE.max);
-            steps--;
-            playTick(800 + (steps * 100)); // Pitch goes down
-            
-            if (steps <= 0) {
-                clearInterval(interval);
-                els.display.normal.textContent = target;
-                els.display.normal.classList.add('anim-pop');
-                playWin();
-            }
-        }, 50);
-    }
-
-    /**
-     * 🎡 WHEEL LOGIC
-     */
-    function drawWheel() {
-        const count = STATE.max - STATE.min + 1;
-        const sliceDeg = 360 / count;
-        let svg = `<svg class="wheel-svg" viewBox="0 0 100 100" style="transform: rotate(${STATE.wheelRotation}deg);">`;
-        
-        for (let i = 0; i < count; i++) {
-            const startAngle = i * sliceDeg;
-            const endAngle = (i + 1) * sliceDeg;
-            
-            // SVG Path Math
-            const x1 = 50 + 50 * Math.cos(Math.PI * (startAngle - 90) / 180);
-            const y1 = 50 + 50 * Math.sin(Math.PI * (startAngle - 90) / 180);
-            const x2 = 50 + 50 * Math.cos(Math.PI * (endAngle - 90) / 180);
-            const y2 = 50 + 50 * Math.sin(Math.PI * (endAngle - 90) / 180);
-            
-            const path = count === 1 
-                ? `M 50 50 L 50 0 A 50 50 0 1 1 49.99 0 Z` // Full circle fallback
-                : `M 50 50 L ${x1} ${y1} A 50 50 0 0 1 ${x2} ${y2} Z`;
-
-            const color = CONFIG.colors[i % CONFIG.colors.length];
-            
-            // Text Positioning
-            const midAngle = startAngle + sliceDeg / 2;
-            const tx = 50 + 38 * Math.cos(Math.PI * (midAngle - 90) / 180);
-            const ty = 50 + 38 * Math.sin(Math.PI * (midAngle - 90) / 180);
-
-            svg += `<path d="${path}" fill="${color}" stroke="white" stroke-width="0.5" />`;
-            // Only show text if there's room
-            if (count < 40) {
-                svg += `<text x="${tx}" y="${ty}" fill="white" 
-                        font-size="${Math.max(3, 10 - count * 0.2)}" 
-                        font-weight="bold" text-anchor="middle" dominant-baseline="middle" 
-                        transform="rotate(${midAngle}, ${tx}, ${ty})">${STATE.min + i}</text>`;
-            }
-        }
-        svg += `</svg>`;
-        els.wheel.innerHTML = svg;
-    }
-
-    function spinWheel() {
-        if (STATE.isSpinning) return;
-        STATE.isSpinning = true;
-        els.buttons.spin.disabled = true;
-        els.display.wheelLabel.textContent = "...";
-
-        const target = getSecureRandom(STATE.min, STATE.max);
-        const count = STATE.max - STATE.min + 1;
-        const sliceDeg = 360 / count;
-        const index = target - STATE.min;
-
-        // --- PHYSICS CALCULATION ---
-
-        // 1. Define Constants
-        const maxSpeed = CONFIG.physics.maxSpeed; 
-        const accelTime = CONFIG.physics.accelTime / 1000; // seconds
-        const decelTime = CONFIG.physics.decelTime / 1000; // seconds
-        
-        // "Full Speed" Phase duration from user selection
-        const spinDuration = CONFIG.physics.durations[STATE.speed] / 1000; // seconds
-        
-        // 2. Calculate Distances for Accel & Decel Phases
-        // EaseInQuad (Accel): Avg Speed = MaxSpeed / 2
-        const accelDist = 0.5 * maxSpeed * accelTime;
-        
-        // EaseOutCubic (Decel): Avg Speed = MaxSpeed / 3
-        // This ensures velocity continuity at the transition (v = maxSpeed)
-        // and provides a "softer" landing curve than Quad.
-        const decelDist = (1/3) * maxSpeed * decelTime;
-        
-        const minRotation = accelDist + decelDist;
-
-        // 3. Calculate Target Geometry
-        const baseTargetAngle = index * sliceDeg + (sliceDeg / 2);
-        // Random drift inside the slice (±40%)
-        const drift = (Math.random() - 0.5) * (sliceDeg * 0.8);
-        const finalTargetAngle = baseTargetAngle + drift;
-
-        const currentRot = STATE.wheelRotation % 360;
-        // Visual top is 0deg. To bring finalTargetAngle to 0deg, we rotate forward by (360 - target).
-        let distToTarget = (360 - finalTargetAngle) - currentRot;
-        while(distToTarget < 0) distToTarget += 360;
-
-        // 4. Calculate Exact Constant Phase Distance
-        // We want total rotation ≈ minRotation + (spinDuration * maxSpeed)
-        // But it must land exactly on 'distToTarget' modulo 360.
-        const approxTotal = minRotation + (spinDuration * maxSpeed);
-        
-        // Calculate how many full 360 rotations fit in approxTotal, adjusted for alignment
-        // Total = k * 360 + distToTarget
-        // We want smallest k such that Total >= approxTotal
-        let finalTotalRotation = distToTarget;
-        while(finalTotalRotation < approxTotal) {
-            finalTotalRotation += 360;
-        }
-
-        // 5. Derived Exact parameters for the constant phase
-        const constantDist = finalTotalRotation - accelDist - decelDist;
-        const constantTime = constantDist / maxSpeed;
-
-        // --- ANIMATION LOOP ---
-        const startRot = STATE.wheelRotation;
-        let startTime = null;
-
-        function animate(timestamp) {
-            if (!startTime) startTime = timestamp;
-            const t = (timestamp - startTime) / 1000; // Time in seconds
-            
-            let currentDist = 0;
-
-            if (t < accelTime) {
-                // Phase 1: Accel (Ease In Quad)
-                const p = t / accelTime;
-                currentDist = accelDist * (p * p);
-            } 
-            else if (t < accelTime + constantTime) {
-                // Phase 2: Constant Speed
-                const t_const = t - accelTime;
-                currentDist = accelDist + (maxSpeed * t_const);
-            } 
-            else if (t < accelTime + constantTime + decelTime) {
-                // Phase 3: Decel (Ease Out Cubic)
-                const t_decel = t - (accelTime + constantTime);
-                const p = t_decel / decelTime;
-                // EaseOutCubic: 1 - (1-p)^3
-                const ease = 1 - Math.pow(1 - p, 3);
-                currentDist = accelDist + constantDist + (decelDist * ease);
-            } 
-            else {
-                // Finished
-                currentDist = finalTotalRotation;
-                STATE.wheelRotation = startRot + finalTotalRotation;
-                
-                // Update DOM final position
-                const svgEl = els.wheel.querySelector('svg');
-                if(svgEl) svgEl.style.transform = `rotate(${STATE.wheelRotation}deg)`;
-                
-                // DELAY RESULT FEEDBACK
-                setTimeout(() => {
-                    STATE.isSpinning = false;
-                    els.buttons.spin.disabled = false;
-                    els.display.wheelLabel.textContent = target;
-                    playWin();
-                }, 500); // 500ms delay
-                
-                return; // Stop loop
-            }
-
-            STATE.wheelRotation = startRot + currentDist;
-            const svgEl = els.wheel.querySelector('svg');
-            if(svgEl) {
-                // Remove transition for JS animation
-                svgEl.style.transition = 'none';
-                svgEl.style.transform = `rotate(${STATE.wheelRotation}deg)`;
-            }
-            
-            requestAnimationFrame(animate);
-        }
-
-        requestAnimationFrame(animate);
-    }
-
-
-    /**
-     * 🔊 AUDIO & UTILS
-     */
+    // UTILS
     function toggleSound() {
         STATE.sound = !STATE.sound;
         els.buttons.sound.style.opacity = STATE.sound ? 1 : 0.5;
